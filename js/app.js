@@ -14,6 +14,7 @@ let state = {
   filterAssetType: 'all', filterDirection: 'all',
   calendarDate: new Date(),
   showTradeModal: false, selectedTrade: null,
+  showProfileModal: false,
   csvParsed: null, csvImporting: false, csvProgress: 0,
 };
 
@@ -78,9 +79,15 @@ function render() {
             </div>`).join('')}
         </nav>
         <div class="sidebar-footer">
-          <div class="sidebar-user-label">Signed in as</div>
-          <div class="sidebar-user-name">${esc(user.name || 'User')}</div>
-          <button class="btn btn-secondary btn-sm" style="width:100%" onclick="handleLogout()">Logout</button>
+          <button class="sidebar-profile-btn" onclick="openProfileModal()">
+            <div class="sidebar-avatar">${esc((user.name||'U').charAt(0).toUpperCase())}</div>
+            <div class="sidebar-user-info">
+              <div class="sidebar-user-name">${esc(user.name || 'User')}</div>
+              <div class="sidebar-user-label">${esc(user.email || '')}</div>
+            </div>
+            <span class="sidebar-profile-icon">⚙</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:0.6rem" onclick="handleLogout()">Logout</button>
         </div>
         <div class="sync-status">
           <div class="sync-dot ${state.syncing ? 'syncing' : ''}"></div>
@@ -91,6 +98,7 @@ function render() {
         ${state.loading ? skeleton() : renderView(stats)}
       </div>
       ${state.showTradeModal ? tradeModal() : ''}
+      ${state.showProfileModal ? profileModal() : ''}
     </div>
   `;
 }
@@ -987,6 +995,176 @@ async function doDeleteBroker(id) {
     render();
   } catch (err) {
     toast(`Delete failed: ${err.message}`, 'error');
+  }
+}
+
+
+// ── PROFILE MODAL ─────────────────────────────────────────
+function openProfileModal()  { state.showProfileModal = true;  render(); }
+function closeProfileModal() { state.showProfileModal = false; render(); }
+
+function profileModal() {
+  const user = getUser() || {};
+  const initial = (user.name || 'U').charAt(0).toUpperCase();
+  return `
+    <div class="modal" onclick="closeProfileModal()">
+      <div class="modal-content" style="max-width:520px" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h2 class="modal-title">Profile & Settings</h2>
+          <button class="btn btn-secondary btn-sm" onclick="closeProfileModal()">✕ Close</button>
+        </div>
+
+        <!-- Avatar + name -->
+        <div class="profile-header">
+          <div class="profile-avatar">${esc(initial)}</div>
+          <div>
+            <div class="profile-name">${esc(user.name || 'User')}</div>
+            <div class="profile-email">${esc(user.email || '')}</div>
+            <div class="profile-joined">Member since ${user.created_at ? new Date(user.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '—'}</div>
+          </div>
+        </div>
+
+        <!-- Stats summary -->
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="profile-stat-value">${state.trades.length}</div>
+            <div class="profile-stat-label">Total Trades</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value">${state.journalEntries.length}</div>
+            <div class="profile-stat-label">Journal Entries</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value" style="color:${calcStats(state.trades).totalPnL >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+              ${calcStats(state.trades).totalPnL >= 0 ? '+' : ''}$${calcStats(state.trades).totalPnL.toFixed(0)}
+            </div>
+            <div class="profile-stat-label">Total P&L</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value">${calcStats(state.trades).winRate}%</div>
+            <div class="profile-stat-label">Win Rate</div>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="profile-section-title">Edit Profile</div>
+
+        <!-- Update name -->
+        <div class="form-group">
+          <label class="form-label">Display Name</label>
+          <input class="form-input" id="profile-name" value="${esc(user.name || '')}" placeholder="Your name">
+        </div>
+        <div style="margin-bottom:1.5rem">
+          <button class="btn btn-primary btn-sm" id="update-name-btn" onclick="doUpdateName()">Update Name</button>
+        </div>
+
+        <!-- Change password -->
+        <div class="profile-section-title">Change Password</div>
+        <div class="form-group">
+          <label class="form-label">Current Password</label>
+          <input type="password" class="form-input" id="profile-cur-pw" placeholder="Your current password" autocomplete="current-password">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">New Password</label>
+            <input type="password" class="form-input" id="profile-new-pw" placeholder="Min 6 characters" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" class="form-input" id="profile-confirm-pw" placeholder="Repeat new password" autocomplete="new-password">
+          </div>
+        </div>
+        <div style="margin-bottom:1.5rem">
+          <button class="btn btn-secondary btn-sm" id="update-pw-btn" onclick="doUpdatePassword()">Change Password</button>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="profile-section-title danger">Danger Zone</div>
+        <div class="danger-zone">
+          <div>
+            <div style="font-weight:600;margin-bottom:0.25rem">Export My Data</div>
+            <div style="font-size:0.8rem;color:var(--text-secondary)">Download all your trades as a CSV file</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="doExportData()">⬇ Export</button>
+        </div>
+        <div class="danger-zone" style="margin-top:0.75rem">
+          <div>
+            <div style="font-weight:600;margin-bottom:0.25rem;color:var(--accent-red)">Delete Account</div>
+            <div style="font-size:0.8rem;color:var(--text-secondary)">Permanently delete your account and all data</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="doDeleteAccount()">Delete</button>
+        </div>
+
+      </div>
+    </div>`;
+}
+
+async function doUpdateName() {
+  const name = document.getElementById('profile-name').value.trim();
+  if (!name) { toast('Name cannot be empty', 'error'); return; }
+  const btn = document.getElementById('update-name-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const res = await api.updateProfile({ name });
+    saveAuth(res.token, res.user);
+    toast('Name updated!', 'success');
+    btn.disabled = false; btn.textContent = 'Update Name';
+    render();
+  } catch (err) {
+    toast(err.message, 'error');
+    btn.disabled = false; btn.textContent = 'Update Name';
+  }
+}
+
+async function doUpdatePassword() {
+  const currentPassword = document.getElementById('profile-cur-pw').value;
+  const newPassword     = document.getElementById('profile-new-pw').value;
+  const confirm         = document.getElementById('profile-confirm-pw').value;
+  if (!currentPassword || !newPassword) { toast('All password fields required', 'error'); return; }
+  if (newPassword.length < 6) { toast('New password must be at least 6 characters', 'error'); return; }
+  if (newPassword !== confirm) { toast('New passwords do not match', 'error'); return; }
+  const btn = document.getElementById('update-pw-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    await api.updateProfile({ currentPassword, newPassword });
+    toast('Password changed successfully!', 'success');
+    document.getElementById('profile-cur-pw').value = '';
+    document.getElementById('profile-new-pw').value = '';
+    document.getElementById('profile-confirm-pw').value = '';
+    btn.disabled = false; btn.textContent = 'Change Password';
+  } catch (err) {
+    toast(err.message, 'error');
+    btn.disabled = false; btn.textContent = 'Change Password';
+  }
+}
+
+function doExportData() {
+  if (!state.trades.length) { toast('No trades to export', 'warn'); return; }
+  const headers = ['symbol','asset_type','direction','entry_price','exit_price','quantity','pnl','commission','entry_date','exit_date','strategy','market_conditions','notes','broker'];
+  const rows = state.trades.map(t => headers.map(h => {
+    const v = t[h] == null ? '' : String(t[h]);
+    return v.includes(',') || v.includes('"') || v.includes('\n') ? `"${v.replace(/"/g,'""')}"` : v;
+  }).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `tradevault-export-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Export downloaded!', 'success');
+}
+
+async function doDeleteAccount() {
+  const confirmText = prompt('Type DELETE (all caps) to permanently delete your account and all data. This cannot be undone.');
+  if (confirmText !== 'DELETE') { toast('Account deletion cancelled', 'info'); return; }
+  const password = prompt('Enter your password to confirm:');
+  if (password === null) return;
+  try {
+    await api.deleteAccount({ password, confirmText });
+    toast('Account deleted. Goodbye!', 'info', 3000);
+    setTimeout(() => { clearAuth(); window.location.href = '/auth.html'; }, 2000);
+  } catch (err) {
+    toast(err.message, 'error');
   }
 }
 

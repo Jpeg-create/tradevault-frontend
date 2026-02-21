@@ -58,6 +58,12 @@ const api = {
   deleteBroker: (id)   => request('DELETE', `/brokers/${id}`),
   syncBroker:   (id)   => request('POST',   `/brokers/${id}/sync`),
 
+  // Auth extras
+  resetPasswordRequest: (data)  => request('POST',   '/auth/reset-password-request', data),
+  resetPassword:        (data)  => request('POST',   '/auth/reset-password', data),
+  updateProfile:        (data)  => request('PUT',    '/auth/profile', data),
+  deleteAccount:        (data)  => request('DELETE', '/auth/account', data),
+
   // Health
   health: () => request('GET', '/health')
 };
