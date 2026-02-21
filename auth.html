@@ -137,6 +137,24 @@
   <script>
     if (getToken()) window.location.href = '/index.html';
 
+    // Pre-warm the Render server (free tier sleeps after 15min inactivity)
+    // This fires immediately on page load so the server is ready when user submits
+    let serverReady = false;
+    (async () => {
+      const banner = document.createElement('div');
+      banner.id = 'wake-banner';
+      banner.style.cssText = 'background:rgba(255,217,61,.1);border:1px solid rgba(255,217,61,.3);color:#ffd93d;padding:.6rem 1rem;border-radius:8px;font-size:.78rem;margin-bottom:1rem;text-align:center;';
+      banner.textContent = '⏳ Server is waking up — this may take 30 seconds on first load…';
+      document.querySelector('.auth-box').insertBefore(banner, document.querySelector('.auth-tabs'));
+      try {
+        await api.ping();
+        serverReady = true;
+        banner.remove();
+      } catch {
+        banner.textContent = '⚠️ Could not reach server. Check your connection or try again shortly.';
+      }
+    })();
+
     // Check if arriving from a reset link with token in URL
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('reset')) {
@@ -240,15 +258,32 @@
       setBtnLoading('forgot-btn', true, 'Send Reset Link');
       try {
         const res = await api.resetPasswordRequest({ email });
-        showSuccess('Reset link sent! Check your email.');
-        // Dev mode: show token directly since no email is configured yet
-        if (res.resetToken) {
-          showSuccess(`Dev mode: Copy this token and click "Have a token?" below.\n\nToken: ${res.resetToken}`);
-          document.getElementById('auth-success').style.whiteSpace = 'pre-wrap';
-          // Add quick link to reset form
-          setTimeout(() => {
-            document.getElementById('reset-token').value = res.resetToken;
-          }, 100);
+
+        if (res.devToken) {
+          // No email service configured — show token directly
+          showSuccess('No email service set up yet. Use the token below to reset your password:');
+          const tokenBox = document.createElement('div');
+          tokenBox.style.cssText = 'background:#0a0e14;border:1px solid #2a3140;border-radius:8px;padding:.875rem;margin-top:.75rem;font-size:.78rem;word-break:break-all;color:#00ff88;font-family:monospace;cursor:pointer;';
+          tokenBox.textContent = res.devToken;
+          tokenBox.title = 'Click to copy';
+          tokenBox.onclick = () => {
+            navigator.clipboard.writeText(res.devToken).then(() => {
+              tokenBox.style.borderColor = '#00ff88';
+              tokenBox.textContent = '✓ Copied! Now click "Enter reset token" below.';
+            });
+          };
+          document.getElementById('auth-success').appendChild(tokenBox);
+          // Pre-fill the reset form
+          document.getElementById('reset-token').value = res.devToken;
+          // Show a link to switch to reset form
+          const link = document.createElement('button');
+          link.className = 'auth-link';
+          link.style.cssText = 'display:block;margin-top:.75rem;font-size:.82rem;';
+          link.textContent = '→ Enter reset token';
+          link.onclick = () => switchTab('reset');
+          document.getElementById('auth-success').appendChild(link);
+        } else {
+          showSuccess(res.message || 'Reset email sent! Check your inbox and spam folder.');
         }
         setBtnLoading('forgot-btn', false, 'Send Reset Link');
       } catch (err) {
