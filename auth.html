@@ -11,40 +11,42 @@
 </head>
 <body class="auth-page">
   <div class="auth-box">
-    <div class="auth-logo">TradeVault</div>
-    <div class="auth-tagline">Your professional trading journal</div>
 
-    <!-- TABS — hidden on reset screens -->
-    <div class="auth-tabs" id="auth-tabs">
-      <div class="auth-tab active" id="tab-login"  onclick="switchTab('login')">Login</div>
-      <div class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Sign Up</div>
+    <div class="auth-header">
+      <div class="auth-logo"><span class="green">Trade</span><span class="blue">Vault</span></div>
+      <div class="auth-tagline">Your professional trading journal</div>
     </div>
 
-    <div class="auth-error" id="auth-error"></div>
-    <div class="auth-success" id="auth-success"></div>
+    <div id="wake-banner-slot"></div>
 
-    <!-- ── LOGIN ───────────────────────────────────────── -->
-    <div id="form-login">
+    <div class="auth-tabs" id="auth-tabs">
+      <button class="auth-tab active" id="tab-login"  onclick="switchTab('login')">Login</button>
+      <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <div class="auth-alert error"   id="auth-error"></div>
+    <div class="auth-alert success" id="auth-success"></div>
+
+    <!-- ── LOGIN ─────────────────────────────────────────── -->
+    <div id="form-login" class="auth-form active">
       <div class="form-group">
         <label class="form-label" for="login-email">Email</label>
         <input type="email" class="form-input" id="login-email" name="email"
           autocomplete="email" placeholder="you@email.com">
       </div>
       <div class="form-group">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem">
-          <label class="form-label" for="login-password" style="margin-bottom:0">Password</label>
-          <button class="auth-link" onclick="switchTab('forgot')">Forgot password?</button>
+        <div class="form-label-row">
+          <label class="form-label" for="login-password">Password</label>
+          <button type="button" class="auth-link" onclick="switchTab('forgot')">Forgot password?</button>
         </div>
         <input type="password" class="form-input" id="login-password" name="password"
           autocomplete="current-password" placeholder="Your password">
       </div>
-      <button class="btn btn-primary" style="width:100%" id="login-btn" onclick="handleLogin()">
-        Login
-      </button>
+      <button class="btn btn-primary btn-block" id="login-btn" onclick="handleLogin()">Login</button>
     </div>
 
-    <!-- ── SIGN UP ──────────────────────────────────────── -->
-    <div id="form-signup" style="display:none">
+    <!-- ── SIGN UP ────────────────────────────────────────── -->
+    <div id="form-signup" class="auth-form">
       <div class="form-group">
         <label class="form-label" for="signup-name">Full Name</label>
         <input type="text" class="form-input" id="signup-name" name="name"
@@ -57,10 +59,10 @@
       </div>
       <div class="form-group">
         <label class="form-label" for="signup-password">Password</label>
-        <input type="password" class="form-input" id="signup-password" name="new-password"
+        <input type="password" class="form-input" id="signup-password"
           autocomplete="new-password" placeholder="Min 6 characters"
           oninput="checkPasswordStrength(this.value)">
-        <div class="password-strength" id="pw-strength" style="display:none">
+        <div class="password-strength" id="pw-strength">
           <div class="pw-bar"><div class="pw-fill" id="pw-fill"></div></div>
           <span class="pw-label" id="pw-label"></span>
         </div>
@@ -70,13 +72,11 @@
         <input type="password" class="form-input" id="signup-confirm"
           autocomplete="new-password" placeholder="Repeat your password">
       </div>
-      <button class="btn btn-primary" style="width:100%" id="signup-btn" onclick="handleSignup()">
-        Create Account
-      </button>
+      <button class="btn btn-primary btn-block" id="signup-btn" onclick="handleSignup()">Create Account</button>
     </div>
 
-    <!-- ── FORGOT PASSWORD ──────────────────────────────── -->
-    <div id="form-forgot" style="display:none">
+    <!-- ── FORGOT PASSWORD ────────────────────────────────── -->
+    <div id="form-forgot" class="auth-form">
       <div class="auth-back">
         <button class="auth-link" onclick="switchTab('login')">← Back to Login</button>
       </div>
@@ -86,17 +86,15 @@
         <input type="email" class="form-input" id="forgot-email"
           autocomplete="email" placeholder="you@email.com">
       </div>
-      <button class="btn btn-primary" style="width:100%" id="forgot-btn" onclick="handleForgot()">
-        Send Reset Link
-      </button>
+      <button class="btn btn-primary btn-block" id="forgot-btn" onclick="handleForgot()">Send Reset Link</button>
     </div>
 
-    <!-- ── RESET PASSWORD ───────────────────────────────── -->
-    <div id="form-reset" style="display:none">
+    <!-- ── RESET PASSWORD ──────────────────────────────────── -->
+    <div id="form-reset" class="auth-form">
       <div class="auth-back">
         <button class="auth-link" onclick="switchTab('login')">← Back to Login</button>
       </div>
-      <p class="auth-hint">Enter the reset token from your email and your new password.</p>
+      <p class="auth-hint">Enter your reset token and choose a new password.</p>
       <div class="form-group">
         <label class="form-label" for="reset-token">Reset Token</label>
         <input type="text" class="form-input" id="reset-token"
@@ -112,14 +110,12 @@
         <input type="password" class="form-input" id="reset-confirm"
           autocomplete="new-password" placeholder="Repeat new password">
       </div>
-      <button class="btn btn-primary" style="width:100%" id="reset-btn" onclick="handleReset()">
-        Set New Password
-      </button>
+      <button class="btn btn-primary btn-block" id="reset-btn" onclick="handleReset()">Set New Password</button>
     </div>
 
-    <!-- ── GOOGLE ────────────────────────────────────────── -->
+    <!-- ── GOOGLE ──────────────────────────────────────────── -->
     <div id="google-section">
-      <div class="auth-divider">or</div>
+      <div class="auth-divider"><span>or</span></div>
       <button class="google-btn" onclick="handleGoogleLogin()">
         <svg class="google-icon" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -130,48 +126,45 @@
         Continue with Google
       </button>
     </div>
-  </div>
+
+  </div><!-- /.auth-box -->
 
   <script src="/js/config.js"></script>
   <script src="/js/api.js"></script>
   <script>
+    // ── BOOT ───────────────────────────────────────────────
     if (getToken()) window.location.href = '/index.html';
 
-    // Pre-warm the Render server (free tier sleeps after 15min inactivity)
-    // This fires immediately on page load so the server is ready when user submits
-    let serverReady = false;
-    (async () => {
-      const banner = document.createElement('div');
-      banner.id = 'wake-banner';
-      banner.style.cssText = 'background:rgba(255,217,61,.1);border:1px solid rgba(255,217,61,.3);color:#ffd93d;padding:.6rem 1rem;border-radius:8px;font-size:.78rem;margin-bottom:1rem;text-align:center;';
-      banner.textContent = '⏳ Server is waking up — this may take 30 seconds on first load…';
-      document.querySelector('.auth-box').insertBefore(banner, document.querySelector('.auth-tabs'));
-      try {
-        await api.ping();
-        serverReady = true;
-        banner.remove();
-      } catch {
-        banner.textContent = '⚠️ Could not reach server. Check your connection or try again shortly.';
-      }
-    })();
-
-    // Check if arriving from a reset link with token in URL
+    // Check for reset token in URL (?reset=TOKEN)
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('reset')) {
       document.getElementById('reset-token').value = urlParams.get('reset');
       switchTab('reset');
     }
 
+    // Pre-warm Render server (free tier sleeps after 15 min)
+    (async () => {
+      const slot = document.getElementById('wake-banner-slot');
+      const banner = document.createElement('div');
+      banner.className = 'wake-banner';
+      banner.textContent = '⏳ Server waking up — may take up to 30 seconds on first load…';
+      slot.appendChild(banner);
+      try {
+        await api.ping();
+        banner.remove();
+      } catch {
+        banner.textContent = '⚠️ Could not reach server. Check connection or try again.';
+      }
+    })();
+
+    // ── HELPERS ────────────────────────────────────────────
     function switchTab(tab) {
-      const forms = ['login','signup','forgot','reset'];
-      forms.forEach(f => {
-        document.getElementById('form-' + f).style.display = f === tab ? 'block' : 'none';
+      ['login','signup','forgot','reset'].forEach(f => {
+        document.getElementById('form-' + f).classList.toggle('active', f === tab);
       });
-      // Show/hide tabs
       const showTabs = tab === 'login' || tab === 'signup';
-      document.getElementById('auth-tabs').style.display = showTabs ? 'flex' : 'none';
+      document.getElementById('auth-tabs').style.display      = showTabs ? 'flex'  : 'none';
       document.getElementById('google-section').style.display = showTabs ? 'block' : 'none';
-      // Update active tab
       document.getElementById('tab-login').classList.toggle('active',  tab === 'login');
       document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
       showError(''); showSuccess('');
@@ -179,45 +172,52 @@
 
     function showError(msg) {
       const el = document.getElementById('auth-error');
-      el.textContent = msg; el.classList.toggle('show', !!msg);
+      el.textContent = msg;
+      el.classList.toggle('show', !!msg);
     }
+
     function showSuccess(msg) {
       const el = document.getElementById('auth-success');
-      el.textContent = msg; el.classList.toggle('show', !!msg);
+      el.innerHTML = '';
+      if (msg) { el.textContent = msg; el.classList.add('show'); }
+      else      { el.classList.remove('show'); }
     }
 
     function setBtnLoading(id, loading, label) {
       const btn = document.getElementById(id);
       btn.disabled = loading;
-      btn.innerHTML = loading ? '<span class="spinner"></span> Please wait…' : label;
+      btn.innerHTML = loading
+        ? '<span class="spinner"></span> Please wait…'
+        : label;
     }
 
     function checkPasswordStrength(val) {
-      const el = document.getElementById('pw-strength');
-      const fill = document.getElementById('pw-fill');
+      const wrap  = document.getElementById('pw-strength');
+      const fill  = document.getElementById('pw-fill');
       const label = document.getElementById('pw-label');
-      if (!val) { el.style.display = 'none'; return; }
-      el.style.display = 'flex';
+      if (!val) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'flex';
       let score = 0;
-      if (val.length >= 6)  score++;
-      if (val.length >= 10) score++;
-      if (/[A-Z]/.test(val)) score++;
-      if (/[0-9]/.test(val)) score++;
+      if (val.length >= 6)          score++;
+      if (val.length >= 10)         score++;
+      if (/[A-Z]/.test(val))        score++;
+      if (/[0-9]/.test(val))        score++;
       if (/[^A-Za-z0-9]/.test(val)) score++;
       const levels = [
-        { pct:'20%', color:'var(--accent-red)',    text:'Very weak' },
-        { pct:'40%', color:'#ff8c32',              text:'Weak' },
-        { pct:'60%', color:'var(--accent-yellow)', text:'Fair' },
+        { pct:'20%', color:'var(--accent-red)',    text:'Weak' },
+        { pct:'40%', color:'#ff8c32',              text:'Fair' },
+        { pct:'60%', color:'var(--accent-yellow)', text:'Medium' },
         { pct:'80%', color:'#a8e063',              text:'Good' },
         { pct:'100%',color:'var(--accent-green)',  text:'Strong' },
       ];
       const lvl = levels[Math.min(score - 1, 4)] || levels[0];
-      fill.style.width = lvl.pct;
+      fill.style.width      = lvl.pct;
       fill.style.background = lvl.color;
-      label.textContent = lvl.text;
-      label.style.color = lvl.color;
+      label.textContent     = lvl.text;
+      label.style.color     = lvl.color;
     }
 
+    // ── LOGIN ──────────────────────────────────────────────
     async function handleLogin() {
       const email    = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
@@ -233,14 +233,15 @@
       }
     }
 
+    // ── SIGN UP ────────────────────────────────────────────
     async function handleSignup() {
       const name     = document.getElementById('signup-name').value.trim();
       const email    = document.getElementById('signup-email').value.trim();
       const password = document.getElementById('signup-password').value;
       const confirm  = document.getElementById('signup-confirm').value;
       if (!name || !email || !password) return showError('Please fill in all fields');
-      if (password.length < 6) return showError('Password must be at least 6 characters');
-      if (password !== confirm) return showError('Passwords do not match');
+      if (password.length < 6)          return showError('Password must be at least 6 characters');
+      if (password !== confirm)          return showError('Passwords do not match');
       setBtnLoading('signup-btn', true, 'Create Account');
       try {
         const res = await api.signup({ name, email, password });
@@ -252,6 +253,7 @@
       }
     }
 
+    // ── FORGOT PASSWORD ────────────────────────────────────
     async function handleForgot() {
       const email = document.getElementById('forgot-email').value.trim();
       if (!email) return showError('Please enter your email');
@@ -260,31 +262,45 @@
         const res = await api.resetPasswordRequest({ email });
 
         if (res.devToken) {
-          // No email service configured — show token directly
-          showSuccess('No email service set up yet. Use the token below to reset your password:');
+          // No email service yet — show token on screen
+          const successEl = document.getElementById('auth-success');
+          successEl.innerHTML = '';
+          successEl.classList.add('show');
+
+          const msg = document.createElement('div');
+          msg.textContent = 'No email service configured. Click the token to copy it, then use it below:';
+          msg.style.marginBottom = '0.75rem';
+          successEl.appendChild(msg);
+
           const tokenBox = document.createElement('div');
-          tokenBox.style.cssText = 'background:#0a0e14;border:1px solid #2a3140;border-radius:8px;padding:.875rem;margin-top:.75rem;font-size:.78rem;word-break:break-all;color:#00ff88;font-family:monospace;cursor:pointer;';
+          tokenBox.style.cssText = 'background:var(--bg-primary);border:1px solid var(--border-color);border-radius:2px;padding:.75rem;font-size:.72rem;word-break:break-all;color:var(--accent-green);cursor:pointer;font-family:monospace;';
           tokenBox.textContent = res.devToken;
           tokenBox.title = 'Click to copy';
           tokenBox.onclick = () => {
             navigator.clipboard.writeText(res.devToken).then(() => {
-              tokenBox.style.borderColor = '#00ff88';
-              tokenBox.textContent = '✓ Copied! Now click "Enter reset token" below.';
+              tokenBox.style.borderColor = 'var(--accent-green)';
+              tokenBox.textContent = '✓ Copied!';
+              setTimeout(() => {
+                document.getElementById('reset-token').value = res.devToken;
+                switchTab('reset');
+              }, 800);
             });
           };
-          document.getElementById('auth-success').appendChild(tokenBox);
-          // Pre-fill the reset form
-          document.getElementById('reset-token').value = res.devToken;
-          // Show a link to switch to reset form
+          successEl.appendChild(tokenBox);
+
           const link = document.createElement('button');
           link.className = 'auth-link';
-          link.style.cssText = 'display:block;margin-top:.75rem;font-size:.82rem;';
-          link.textContent = '→ Enter reset token';
-          link.onclick = () => switchTab('reset');
-          document.getElementById('auth-success').appendChild(link);
+          link.style.cssText = 'display:block;margin-top:.75rem;';
+          link.textContent = '→ Go to Reset Password form';
+          link.onclick = () => {
+            document.getElementById('reset-token').value = res.devToken;
+            switchTab('reset');
+          };
+          successEl.appendChild(link);
         } else {
           showSuccess(res.message || 'Reset email sent! Check your inbox and spam folder.');
         }
+
         setBtnLoading('forgot-btn', false, 'Send Reset Link');
       } catch (err) {
         showError(err.message);
@@ -292,27 +308,30 @@
       }
     }
 
+    // ── RESET PASSWORD ─────────────────────────────────────
     async function handleReset() {
       const token       = document.getElementById('reset-token').value.trim();
       const newPassword = document.getElementById('reset-password').value;
       const confirm     = document.getElementById('reset-confirm').value;
-      if (!token) return showError('Please enter your reset token');
+      if (!token)                        return showError('Please paste your reset token');
       if (!newPassword || newPassword.length < 6) return showError('Password must be at least 6 characters');
-      if (newPassword !== confirm) return showError('Passwords do not match');
+      if (newPassword !== confirm)        return showError('Passwords do not match');
       setBtnLoading('reset-btn', true, 'Set New Password');
       try {
         await api.resetPassword({ token, newPassword });
-        showSuccess('Password updated! You can now log in.');
+        showSuccess('Password updated! Redirecting to login…');
         setTimeout(() => switchTab('login'), 2000);
       } catch (err) {
         showError(err.message);
+      } finally {
         setBtnLoading('reset-btn', false, 'Set New Password');
       }
     }
 
+    // ── GOOGLE ─────────────────────────────────────────────
     function handleGoogleLogin() {
       if (!CONFIG.GOOGLE_CLIENT_ID || CONFIG.GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
-        showError('Google login is not set up yet. Please use email and password.');
+        showError('Google login is not configured yet. Please use email and password.');
         return;
       }
       google.accounts.id.initialize({
@@ -328,10 +347,11 @@
       google.accounts.id.prompt();
     }
 
+    // ── ENTER KEY SUPPORT ──────────────────────────────────
     document.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
       const active = ['login','signup','forgot','reset'].find(t =>
-        document.getElementById('form-' + t).style.display !== 'none'
+        document.getElementById('form-' + t).classList.contains('active')
       );
       if (active === 'login')  handleLogin();
       if (active === 'signup') handleSignup();

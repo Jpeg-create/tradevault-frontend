@@ -71,7 +71,7 @@ function render() {
   app.innerHTML = `
     <div class="app-container">
       <div class="sidebar">
-        <div class="logo">TradeVault</div>
+        <div class="logo"><span>Trade</span>Vault</div>
         <nav>
           ${views.map(v => `
             <div class="nav-item ${state.currentView === v ? 'active' : ''}" onclick="changeView('${v}')">
@@ -91,7 +91,7 @@ function render() {
         </div>
         <div class="sync-status">
           <div class="sync-dot ${state.syncing ? 'syncing' : ''}"></div>
-          <span>${state.syncing ? 'Syncing…' : 'Live'}</span>
+          <span>${state.syncing ? 'UPLINK ACTIVE…' : 'SYSTEM ONLINE'}</span>
         </div>
       </div>
       <div class="main-content">
@@ -128,11 +128,11 @@ function skeleton() {
 }
 
 function statCard(label, value, sub, positive = null) {
-  const color = positive === true ? 'var(--accent-green)' : positive === false ? 'var(--accent-red)' : 'inherit';
+  const colorClass = positive === true ? 'positive' : positive === false ? 'negative' : '';
   return `
     <div class="stat-card">
       <div class="stat-label">${label}</div>
-      <div class="stat-value" style="color:${color}">${value}</div>
+      <div class="stat-value ${colorClass}">${value}</div>
       <div class="stat-change">${sub}</div>
     </div>`;
 }
@@ -221,7 +221,7 @@ function tradeCard(t, showDelete = false) {
           </span>
         </div>
         <div class="trade-right">
-          <span class="trade-pnl" style="color:${pnlColor}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</span>
+          <span class="trade-pnl ${pnl >= 0 ? 'positive' : 'negative'}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</span>
           ${showDelete
             ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();doDeleteTrade('${esc(t.id)}')">✕</button>`
             : ''}
@@ -270,9 +270,7 @@ function analytics(s) {
             <div class="trade-item" style="cursor:default">
               <div class="trade-header">
                 <span class="trade-symbol">${esc(k)}</span>
-                <span class="trade-pnl" style="color:${d.pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
-                  ${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}
-                </span>
+                <span class="trade-pnl ${d.pnl >= 0 ? 'positive' : 'negative'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</span>
               </div>
               <div class="trade-meta">
                 <span class="trade-meta-item">📊 ${d.count} trades</span>
@@ -343,7 +341,7 @@ function calendar() {
         ${hasJournal[day] ? '<div class="calendar-day-journal">📝</div>' : ''}
         <div class="calendar-day-number">${day}</div>
         ${ts.length ? `
-          <div class="calendar-day-pnl" style="color:${pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+          <div class="calendar-day-pnl ${pnl >= 0 ? 'positive' : 'negative'}">
             ${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(0)}
           </div>
           <div class="calendar-day-trades">${ts.length}t</div>` : ''}
@@ -439,7 +437,7 @@ function journal() {
             const color = pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
             return `
               <div class="journal-entry" style="border-left-color:${color}">
-                <div class="journal-date" style="color:${color}">
+                <div class="journal-date ${pnl >= 0 ? 'positive' : 'negative'}">
                   ${esc(t.symbol)} · ${t.exit_date ? new Date(t.exit_date).toLocaleDateString() : '—'}
                   <span style="margin-left:1rem">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</span>
                 </div>
@@ -1035,7 +1033,7 @@ function profileModal() {
             <div class="profile-stat-label">Journal Entries</div>
           </div>
           <div class="profile-stat">
-            <div class="profile-stat-value" style="color:${calcStats(state.trades).totalPnL >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+            <div class="profile-stat-value ${calcStats(state.trades).totalPnL >= 0 ? 'positive' : 'negative'}">
               ${calcStats(state.trades).totalPnL >= 0 ? '+' : ''}$${calcStats(state.trades).totalPnL.toFixed(0)}
             </div>
             <div class="profile-stat-label">Total P&L</div>
