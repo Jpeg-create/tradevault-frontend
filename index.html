@@ -3,21 +3,1024 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TradeVault - Trading Journal</title>
+  <meta name="description" content="TradeVault — The professional trading journal built for serious traders. Log trades, find your edge, grow your account.">
+  <title>TradeVault — Stop Guessing. Start Trading With Data.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css">
-</head>
-<body>
-  <div id="toast-container"></div>
-  <div id="app"></div>
-
+  <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="/js/config.js"></script>
   <script src="/js/api.js"></script>
-  <script>
-    // Guard — redirect to login if not authenticated
-    if (!getToken()) window.location.href = '/login';
-  </script>
-  <script src="/js/app.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:      #07100a;
+      --bg2:     #0c1810;
+      --bg3:     #111f15;
+      --card:    #162019;
+      --card2:   #1d2d22;
+      --green:   #a3e635;
+      --green2:  #c4f56b;
+      --cyan:    #22d3ee;
+      --red:     #f43f5e;
+      --txt:     #edfdf2;
+      --txt2:    #6b9070;
+      --txt3:    #3a5040;
+      --border:  rgba(255,255,255,0.055);
+      --border2: rgba(163,230,53,0.2);
+      --r8: 8px; --r12: 12px; --r16: 16px; --r20: 20px; --r24: 24px;
+    }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--txt);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─ KEYFRAMES ─ */
+    @keyframes ticker  { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+    @keyframes float   { 0%,100% { transform: translateY(0px) } 50% { transform: translateY(-10px) } }
+    @keyframes pulse   { 0%,100% { opacity: 1 } 50% { opacity: 0.35 } }
+    @keyframes fadeUp  { from { opacity: 0; transform: translateY(28px) } to { opacity: 1; transform: translateY(0) } }
+    @keyframes gradShift { 0%,100% { background-position: 0% 50% } 50% { background-position: 100% 50% } }
+
+    /* ─ SCROLL REVEAL ─ */
+    .sr { opacity: 0; transform: translateY(32px); transition: opacity .7s ease, transform .7s ease; }
+    .sr.d1 { transition-delay: .1s } .sr.d2 { transition-delay: .2s }
+    .sr.d3 { transition-delay: .3s } .sr.d4 { transition-delay: .4s } .sr.d5 { transition-delay: .5s }
+    .sr.in { opacity: 1; transform: none; }
+
+    /* ─ NAVBAR ─ */
+    nav {
+      position: sticky; top: 0; z-index: 500;
+      height: 62px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 6%;
+      background: rgba(7,16,10,0.88);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+      animation: fadeUp 0.5s ease both;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: .55rem;
+      text-decoration: none; flex-shrink: 0;
+    }
+    .nav-logo-text {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: 1.1rem; font-weight: 900; letter-spacing: -.4px;
+      color: var(--txt);
+    }
+    .nav-logo-text span { color: var(--green); }
+    .nav-menu {
+      display: flex; align-items: center; gap: .15rem; list-style: none;
+    }
+    .nav-menu a {
+      color: var(--txt2); font-size: .75rem; font-weight: 500;
+      text-decoration: none; padding: .4rem .8rem;
+      border-radius: var(--r8); transition: all .15s;
+    }
+    .nav-menu a:hover { color: var(--txt); background: rgba(255,255,255,.05); }
+    .nav-actions { display: flex; gap: .6rem; align-items: center; }
+    .nav-hamburger {
+      display: none; background: none;
+      border: 1px solid var(--border); border-radius: var(--r8);
+      color: var(--txt2); padding: .4rem .6rem; cursor: pointer; font-size: .9rem;
+    }
+
+    /* ─ BUTTONS ─ */
+    .btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .55rem 1.15rem; border-radius: var(--r8); border: none;
+      font-family: 'JetBrains Mono', monospace; font-size: .76rem;
+      font-weight: 700; cursor: pointer; text-decoration: none;
+      transition: all .18s ease; white-space: nowrap; letter-spacing: .2px;
+    }
+    .btn-ghost { background: transparent; color: var(--txt2); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--txt); border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.04); }
+    .btn-green { background: var(--green); color: #0b1810; font-weight: 800; }
+    .btn-green:hover { background: var(--green2); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(163,230,53,.28); }
+    .btn-outline-green { background: transparent; color: var(--green); border: 1px solid var(--border2); }
+    .btn-outline-green:hover { background: rgba(163,230,53,.07); border-color: var(--green); }
+    .btn-lg { padding: .85rem 1.8rem; font-size: .86rem; border-radius: var(--r12); }
+
+    /* ─ TICKER ─ */
+    .ticker-wrap {
+      overflow: hidden; background: var(--bg2);
+      border-bottom: 1px solid var(--border); padding: .55rem 0;
+    }
+    .ticker-track {
+      display: flex; gap: 2.5rem; width: max-content;
+      animation: ticker 32s linear infinite;
+    }
+    .ticker-item { display: flex; gap: .45rem; font-size: .68rem; color: var(--txt2); white-space: nowrap; }
+    .ticker-item b { color: var(--txt); }
+    .up { color: var(--green); } .dn { color: var(--red); }
+
+    /* ─ HERO ─ */
+    .hero {
+      padding: 5.5rem 6% 0;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 65% 45% at 50% -5%, rgba(163,230,53,.085) 0%, transparent 68%),
+        radial-gradient(ellipse 35% 25% at 15% 90%, rgba(34,211,238,.05) 0%, transparent 55%);
+    }
+    /* dot-grid overlay */
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background-image: radial-gradient(rgba(163,230,53,.08) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, black 0%, transparent 75%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(163,230,53,.07); border: 1px solid rgba(163,230,53,.2);
+      color: var(--green); padding: .32rem 1rem; border-radius: 20px;
+      font-size: .66rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; margin-bottom: 1.75rem; position: relative;
+    }
+    .badge-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 1.6s infinite; }
+    .hero h1 {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: clamp(2.75rem, 6.5vw, 5.25rem);
+      font-weight: 900; line-height: 1; letter-spacing: -2.5px;
+      margin-bottom: 1.5rem; position: relative;
+    }
+    .hero h1 .line-white { display: block; color: var(--txt); }
+    .hero h1 .line-green {
+      display: block;
+      background: linear-gradient(120deg, var(--green) 0%, var(--cyan) 100%);
+      background-size: 200% 200%; animation: gradShift 4s ease infinite;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero h1 .line-muted { display: block; color: var(--txt2); }
+    .hero-sub {
+      font-size: clamp(.82rem, 2vw, .98rem); color: var(--txt2);
+      line-height: 1.85; max-width: 510px; margin: 0 auto 2.25rem; position: relative;
+    }
+    .hero-cta { display: flex; gap: .85rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem; position: relative; }
+    .hero-fine { color: var(--txt3); font-size: .67rem; margin-bottom: 4.5rem; position: relative; }
+    .hero-fine b { color: var(--txt2); }
+
+    /* ─ PROOF STRIP ─ */
+    .proof-strip {
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 2.5rem;
+      padding: 1.75rem 0;
+      border-top: 1px solid var(--border);
+      position: relative; z-index: 1;
+    }
+    .proof-item { text-align: center; }
+    .proof-num {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: 1.65rem; font-weight: 900; color: var(--green); line-height: 1; margin-bottom: .2rem;
+    }
+    .proof-lbl { font-size: .62rem; color: var(--txt2); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ─ DASHBOARD MOCKUP ─ */
+    .mockup-wrap { padding: 0 5%; max-width: 1160px; margin: 0 auto; position: relative; z-index: 1; }
+    .browser {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r24); overflow: hidden;
+      box-shadow: 0 60px 120px -20px rgba(0,0,0,.75), 0 0 0 1px rgba(163,230,53,.05);
+      animation: float 8s ease-in-out infinite;
+    }
+    .browser-bar {
+      display: flex; align-items: center; gap: .55rem;
+      padding: .85rem 1.25rem; background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .bdot { width: 11px; height: 11px; border-radius: 50%; }
+    .burl {
+      flex: 1; background: var(--bg3); border-radius: 6px;
+      padding: .28rem .8rem; font-size: .64rem; color: var(--txt3);
+      margin: 0 .6rem;
+    }
+    .mock-body { display: flex; height: 430px; overflow: hidden; }
+    /* Sidebar */
+    .m-sidebar {
+      width: 196px; flex-shrink: 0;
+      background: var(--bg); border-right: 1px solid var(--border);
+      padding: 1.1rem .75rem;
+    }
+    .m-brand {
+      display: flex; align-items: center; gap: .45rem;
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: .88rem; font-weight: 900; margin-bottom: 1.6rem; padding: 0 .3rem;
+    }
+    .m-brand span { color: var(--green); }
+    .m-section-lbl {
+      font-size: .47rem; color: var(--txt3); text-transform: uppercase;
+      letter-spacing: 1.5px; padding: 0 .7rem; margin: .6rem 0 .3rem;
+    }
+    .m-link {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .46rem .7rem; border-radius: var(--r8);
+      font-size: .67rem; color: var(--txt2); margin-bottom: 1px;
+    }
+    .m-link.active { background: var(--green); color: var(--bg); font-weight: 700; }
+    /* Main */
+    .m-main { flex: 1; padding: 1.4rem 1.2rem; overflow: hidden; }
+    .m-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.1rem; }
+    .m-title { font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.15rem; font-weight: 900; letter-spacing: -.5px; }
+    .m-add {
+      background: var(--green); color: var(--bg);
+      font-size: .6rem; font-weight: 800; padding: .3rem .8rem; border-radius: 6px;
+    }
+    .m-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: .45rem; margin-bottom: 1rem; }
+    .m-stat { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r8); padding: .7rem; }
+    .m-stat-lbl { font-size: .44rem; color: var(--txt2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: .25rem; }
+    .m-stat-val { font-family: 'Cabinet Grotesk', sans-serif; font-size: 1rem; font-weight: 900; line-height: 1; }
+    .m-rows { display: flex; flex-direction: column; gap: .32rem; }
+    .m-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r8);
+      padding: .52rem .72rem;
+    }
+    .m-row-left { display: flex; flex-direction: column; gap: .08rem; }
+    .m-sym { font-size: .7rem; font-weight: 700; }
+    .m-meta { font-size: .52rem; color: var(--txt2); }
+    .m-badge { font-size: .46rem; font-weight: 800; padding: .08rem .38rem; border-radius: 8px; margin-left: .28rem; }
+    .lb { background: rgba(163,230,53,.1); color: var(--green); }
+    .sb { background: rgba(244,63,94,.1); color: var(--red); }
+    .m-pnl { font-size: .76rem; font-weight: 800; }
+
+    /* ─ SECTION LAYOUT ─ */
+    section { padding: 6rem 6%; }
+    .s-inner { max-width: 1160px; margin: 0 auto; }
+    .s-tag { font-size: .63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: var(--green); margin-bottom: .65rem; }
+    .s-title {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: clamp(1.85rem, 3.8vw, 2.9rem); font-weight: 900;
+      letter-spacing: -1.2px; line-height: 1.05; margin-bottom: .8rem;
+    }
+    .s-sub { color: var(--txt2); font-size: .84rem; line-height: 1.82; max-width: 460px; }
+    .center { text-align: center; }
+    .center .s-sub { max-width: 490px; margin: 0 auto; }
+
+    /* ─ FEATURES ─ */
+    .section-dark { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .feat-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      border: 1px solid var(--border); border-radius: var(--r16);
+      overflow: hidden; background: var(--border); gap: 1px;
+      margin-top: 3.5rem;
+    }
+    .feat-card {
+      background: var(--bg2); padding: 2rem; position: relative;
+      transition: background .22s;
+    }
+    .feat-card:hover { background: var(--card); }
+    .feat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--green) 0%, transparent 70%);
+      opacity: 0; transition: opacity .22s;
+    }
+    .feat-card:hover::before { opacity: 1; }
+    .feat-icon {
+      width: 44px; height: 44px; border-radius: var(--r12);
+      background: rgba(163,230,53,.07); border: 1px solid rgba(163,230,53,.14);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; margin-bottom: 1.1rem;
+    }
+    .feat-title { font-family: 'Cabinet Grotesk', sans-serif; font-size: .97rem; font-weight: 800; margin-bottom: .45rem; }
+    .feat-desc { color: var(--txt2); font-size: .76rem; line-height: 1.78; }
+
+    /* ─ SPLIT ─ */
+    .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+    .split-points { display: flex; flex-direction: column; gap: 1rem; }
+    .spoint {
+      display: flex; gap: .85rem; align-items: flex-start;
+      padding: 1.1rem; border: 1px solid var(--border);
+      border-radius: var(--r12); background: var(--card);
+      transition: border-color .2s, transform .2s;
+    }
+    .spoint:hover { border-color: var(--border2); transform: translateX(3px); }
+    .spoint-icon {
+      width: 38px; height: 38px; flex-shrink: 0;
+      background: rgba(163,230,53,.07); border-radius: var(--r8);
+      display: flex; align-items: center; justify-content: center; font-size: .95rem;
+    }
+    .spoint-title { font-size: .83rem; font-weight: 700; margin-bottom: .2rem; }
+    .spoint-desc { font-size: .73rem; color: var(--txt2); line-height: 1.7; }
+    /* mini bar chart mockup */
+    .chart-card {
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: var(--r16); padding: 1.5rem; overflow: hidden; position: relative;
+    }
+    .chart-lbl { font-size: .63rem; color: var(--txt2); margin-bottom: .2rem; text-transform: uppercase; letter-spacing: .8px; }
+    .chart-val { font-family: 'Cabinet Grotesk', sans-serif; font-size: 2.1rem; font-weight: 900; color: var(--green); line-height: 1; margin-bottom: .15rem; }
+    .chart-sub { font-size: .63rem; color: var(--txt2); margin-bottom: 1.4rem; }
+    .chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 90px; }
+    .cbar { flex: 1; border-radius: 3px 3px 0 0; }
+    .chart-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 50px; background: linear-gradient(transparent, var(--card2)); }
+    /* strategy table mock */
+    .strat-table { display: flex; flex-direction: column; gap: .4rem; margin-top: .8rem; }
+    .strat-row {
+      display: flex; align-items: center; gap: .75rem;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--r8); padding: .55rem .8rem;
+    }
+    .strat-name { font-size: .7rem; font-weight: 700; flex: 1; }
+    .strat-bar-wrap { flex: 2; background: var(--border); border-radius: 4px; height: 5px; }
+    .strat-bar { height: 100%; border-radius: 4px; background: var(--green); }
+    .strat-pnl { font-size: .7rem; font-weight: 800; }
+
+    /* ─ HOW IT WORKS ─ */
+    .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; margin-top: 4rem; position: relative; }
+    .steps::before {
+      content: ''; position: absolute;
+      top: 28px; left: calc(16.66% + 28px); right: calc(16.66% + 28px);
+      height: 1px; background: linear-gradient(90deg, transparent, var(--border2), transparent);
+    }
+    .step { padding: 1rem 2.5rem; text-align: center; }
+    .step-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--green); color: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cabinet Grotesk', sans-serif; font-size: 1.3rem; font-weight: 900;
+      margin: 0 auto 1.3rem; position: relative; z-index: 1;
+      box-shadow: 0 0 30px rgba(163,230,53,.3);
+    }
+    .step-title { font-family: 'Cabinet Grotesk', sans-serif; font-size: .95rem; font-weight: 800; margin-bottom: .45rem; }
+    .step-desc { font-size: .76rem; color: var(--txt2); line-height: 1.75; }
+
+    /* ─ METRICS ─ */
+    .metrics-grid {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      border: 1px solid var(--border); border-radius: var(--r16);
+      overflow: hidden; background: var(--border); gap: 1px;
+    }
+    .metric { background: var(--bg2); padding: 2.25rem 1.5rem; text-align: center; }
+    .metric-num {
+      font-family: 'Cabinet Grotesk', sans-serif; font-size: 2.8rem; font-weight: 900; line-height: 1;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: .5rem;
+    }
+    .metric-lbl { font-size: .7rem; color: var(--txt2); line-height: 1.55; }
+
+    /* ─ TESTIMONIALS ─ */
+    .testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-top: 3.5rem; }
+    .tcard {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r16); padding: 1.75rem;
+      transition: border-color .2s, transform .2s;
+    }
+    .tcard:hover { border-color: var(--border2); transform: translateY(-3px); }
+    .tcard-stars { color: var(--green); font-size: .72rem; letter-spacing: 2px; margin-bottom: .85rem; }
+    .tcard-quote { font-size: .8rem; color: var(--txt2); line-height: 1.8; font-style: italic; margin-bottom: 1.25rem; }
+    .tcard-quote::before { content: '"'; color: var(--green); font-size: 1.4rem; font-family: Georgia,serif; line-height: 0; vertical-align: -.3em; margin-right: .2rem; }
+    .tcard-author { display: flex; align-items: center; gap: .75rem; }
+    .tcard-av {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cabinet Grotesk', sans-serif; font-size: 1rem; font-weight: 900; color: var(--bg);
+      flex-shrink: 0;
+    }
+    .tcard-name { font-size: .78rem; font-weight: 700; margin-bottom: .08rem; }
+    .tcard-role { font-size: .64rem; color: var(--txt2); }
+
+    /* ─ PRICING ─ */
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; max-width: 780px; margin: 3.5rem auto 0; }
+    .pcard {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r16); padding: 2.25rem; position: relative;
+    }
+    .pcard.pro { background: linear-gradient(145deg, rgba(163,230,53,.05), var(--card)); border-color: rgba(163,230,53,.25); }
+    .pcard-ribbon {
+      position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+      background: var(--green); color: var(--bg);
+      font-size: .6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+      padding: .26rem 1rem; border-radius: 20px;
+    }
+    .pcard-tier { font-size: .62rem; color: var(--txt2); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: .45rem; }
+    .pcard-price {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: 2.85rem; font-weight: 900; letter-spacing: -2px; margin-bottom: .25rem; line-height: 1;
+    }
+    .pcard-price sub { font-size: .95rem; font-weight: 400; color: var(--txt2); font-family: 'JetBrains Mono'; letter-spacing: 0; vertical-align: baseline; }
+    .pcard-desc { color: var(--txt2); font-size: .76rem; line-height: 1.7; margin-bottom: 1.75rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; }
+    .pcard-list { list-style: none; display: flex; flex-direction: column; gap: .58rem; margin-bottom: 1.75rem; }
+    .pcard-list li { display: flex; align-items: flex-start; gap: .6rem; font-size: .76rem; color: var(--txt2); }
+    .pcard-list li::before { content: '✓'; color: var(--green); font-weight: 800; flex-shrink: 0; padding-top: .05rem; }
+    .pcard-list li.na { color: var(--txt3); }
+    .pcard-list li.na::before { content: '—'; color: var(--txt3); }
+    .pcard-btn { width: 100%; justify-content: center; padding: .8rem; font-size: .8rem; }
+
+    /* ─ FAQ ─ */
+    .faq-wrap { max-width: 700px; margin: 3rem auto 0; border: 1px solid var(--border); border-radius: var(--r16); overflow: hidden; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-btn {
+      width: 100%; background: var(--card); border: none;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.2rem 1.5rem; gap: 1rem;
+      font-family: 'JetBrains Mono', monospace; font-size: .8rem; font-weight: 700;
+      color: var(--txt); cursor: pointer; text-align: left; transition: background .15s;
+    }
+    .faq-btn:hover { background: var(--card2); }
+    .faq-btn.open { color: var(--green); }
+    .faq-arrow { color: var(--txt2); font-size: .7rem; flex-shrink: 0; transition: transform .22s; }
+    .faq-btn.open .faq-arrow { transform: rotate(180deg); color: var(--green); }
+    .faq-body {
+      max-height: 0; overflow: hidden; background: rgba(163,230,53,.015);
+      transition: max-height .3s ease;
+    }
+    .faq-body.open { max-height: 220px; }
+    .faq-body p { padding: 0 1.5rem 1.25rem; font-size: .76rem; color: var(--txt2); line-height: 1.8; }
+
+    /* ─ CTA BANNER ─ */
+    .cta-section { padding: 8rem 6%; text-align: center; position: relative; overflow: hidden; }
+    .cta-glow {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(163,230,53,.06) 0%, transparent 70%);
+    }
+    .cta-section h2 {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: clamp(2rem, 5vw, 4rem); font-weight: 900;
+      letter-spacing: -1.5px; margin-bottom: 1rem; position: relative;
+    }
+    .cta-section h2 em { font-style: normal; color: var(--green); }
+    .cta-section p { color: var(--txt2); font-size: .88rem; margin-bottom: 2.5rem; position: relative; }
+    .cta-btns { display: flex; gap: .85rem; justify-content: center; flex-wrap: wrap; position: relative; }
+    .cta-fine { color: var(--txt3); font-size: .66rem; margin-top: 1.1rem; position: relative; }
+
+    /* ─ FOOTER ─ */
+    footer { border-top: 1px solid var(--border); padding: 3.5rem 6% 2rem; }
+    .footer-grid {
+      max-width: 1160px; margin: 0 auto;
+      display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 3rem;
+    }
+    .footer-brand-desc { color: var(--txt2); font-size: .73rem; line-height: 1.8; margin-top: .85rem; max-width: 210px; }
+    .footer-col h5 { font-size: .63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: .9rem; color: var(--txt); }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: .55rem; }
+    .footer-col a { color: var(--txt2); text-decoration: none; font-size: .73rem; transition: color .15s; }
+    .footer-col a:hover { color: var(--txt); }
+    .footer-bottom { max-width: 1160px; margin: 2.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; font-size: .65rem; color: var(--txt2); }
+    .footer-risk { max-width: 1160px; margin: 1.25rem auto 0; font-size: .6rem; color: var(--txt3); line-height: 1.7; }
+
+    /* ─ RESPONSIVE ─ */
+    @media (max-width: 1080px) {
+      .feat-grid { grid-template-columns: repeat(2,1fr); }
+      .split-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .testi-grid { grid-template-columns: repeat(2,1fr); }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 740px) {
+      nav { padding: 0 5%; }
+      .nav-menu { display: none; }
+      .nav-menu.open {
+        display: flex; flex-direction: column; position: absolute;
+        top: 62px; left: 0; right: 0; padding: 1rem 5%;
+        background: var(--bg2); border-bottom: 1px solid var(--border); gap: .6rem; z-index: 200;
+      }
+      .nav-hamburger { display: block; }
+      .hero { padding: 3.5rem 5% 0; }
+      .hero h1 { letter-spacing: -1.2px; }
+      .m-sidebar { display: none; }
+      .mock-body { height: 280px; }
+      .m-stats { grid-template-columns: repeat(2,1fr); }
+      .feat-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .steps::before { display: none; }
+      .step { padding: 1rem; }
+      .metrics-grid { grid-template-columns: repeat(2,1fr); }
+      .testi-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      section { padding: 4rem 5%; }
+      .proof-strip { gap: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─ NAV ─────────────────────────────────────────────── -->
+<nav>
+  <a href="/" class="nav-logo">
+    <svg width="27" height="27" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="g0" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#g0)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#g0)" stroke-width="1.2" fill="rgba(34,211,238,0.05)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#g0)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#g0)"/><circle cx="16" cy="27" r="1.5" fill="url(#g0)"/><circle cx="5" cy="16" r="1.5" fill="url(#g0)"/><circle cx="27" cy="16" r="1.5" fill="url(#g0)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#22d3ee"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#22d3ee"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    <span class="nav-logo-text">Trade<span>Vault</span></span>
+  </a>
+
+  <ul class="nav-menu" id="nav-menu">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+
+  <div class="nav-actions">
+    <a href="/login" class="btn btn-ghost">Log in</a>
+    <a href="/login" class="btn btn-green" id="nav-signup">Sign up free</a>
+    <button class="nav-hamburger" onclick="document.getElementById('nav-menu').classList.toggle('open')">☰</button>
+  </div>
+</nav>
+
+<!-- ─ LIVE TICKER ───────────────────────────────────────── -->
+<div class="ticker-wrap" aria-hidden="true">
+  <div class="ticker-track">
+    <div class="ticker-item"><b>AAPL</b> 191.44 <span class="up">▲ +1.32%</span></div>
+    <div class="ticker-item"><b>EUR/USD</b> 1.0842 <span class="dn">▼ −0.28%</span></div>
+    <div class="ticker-item"><b>BTC/USD</b> 68,120 <span class="up">▲ +2.91%</span></div>
+    <div class="ticker-item"><b>TSLA</b> 251.40 <span class="up">▲ +3.08%</span></div>
+    <div class="ticker-item"><b>GBP/USD</b> 1.2688 <span class="dn">▼ −0.44%</span></div>
+    <div class="ticker-item"><b>ETH/USD</b> 3,618 <span class="up">▲ +1.75%</span></div>
+    <div class="ticker-item"><b>SPY</b> 516.82 <span class="up">▲ +0.61%</span></div>
+    <div class="ticker-item"><b>NVDA</b> 892.30 <span class="dn">▼ −0.94%</span></div>
+    <div class="ticker-item"><b>NQ=F</b> 18,240 <span class="up">▲ +0.52%</span></div>
+    <div class="ticker-item"><b>GC=F</b> 2,368 <span class="up">▲ +0.18%</span></div>
+    <div class="ticker-item"><b>AAPL</b> 191.44 <span class="up">▲ +1.32%</span></div>
+    <div class="ticker-item"><b>EUR/USD</b> 1.0842 <span class="dn">▼ −0.28%</span></div>
+    <div class="ticker-item"><b>BTC/USD</b> 68,120 <span class="up">▲ +2.91%</span></div>
+    <div class="ticker-item"><b>TSLA</b> 251.40 <span class="up">▲ +3.08%</span></div>
+    <div class="ticker-item"><b>GBP/USD</b> 1.2688 <span class="dn">▼ −0.44%</span></div>
+    <div class="ticker-item"><b>ETH/USD</b> 3,618 <span class="up">▲ +1.75%</span></div>
+    <div class="ticker-item"><b>SPY</b> 516.82 <span class="up">▲ +0.61%</span></div>
+    <div class="ticker-item"><b>NVDA</b> 892.30 <span class="dn">▼ −0.94%</span></div>
+    <div class="ticker-item"><b>NQ=F</b> 18,240 <span class="up">▲ +0.52%</span></div>
+    <div class="ticker-item"><b>GC=F</b> 2,368 <span class="up">▲ +0.18%</span></div>
+  </div>
+</div>
+
+<!-- ─ HERO ─────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-badge sr"><div class="badge-dot"></div> Free · No credit card · Launch offer</div>
+
+  <h1 class="sr d1">
+    <span class="line-white">Stop guessing.</span>
+    <span class="line-green">Trade with edge.</span>
+    <span class="line-muted">Build real consistency.</span>
+  </h1>
+
+  <p class="hero-sub sr d2">
+    TradeVault is the professional trading journal that shows you exactly what's working, what isn't, and why — so you can stop repeating costly mistakes and start compounding your edge.
+  </p>
+
+  <div class="hero-cta sr d3">
+    <a href="/login" class="btn btn-green btn-lg" id="hero-cta-primary">Start journaling free →</a>
+    <a href="#features" class="btn btn-ghost btn-lg">Explore features</a>
+  </div>
+  <p class="hero-fine sr d4"><b>Free forever</b> · Takes 60 seconds · No BS</p>
+
+  <!-- Proof strip -->
+  <div class="proof-strip sr d4">
+    <div class="proof-item"><div class="proof-num" data-target="12840">0</div><div class="proof-lbl">Trades logged</div></div>
+    <div class="proof-item"><div class="proof-num" data-target="6">6</div><div class="proof-lbl">Asset classes</div></div>
+    <div class="proof-item"><div class="proof-num">$0</div><div class="proof-lbl">To get started</div></div>
+    <div class="proof-item"><div class="proof-num">100%</div><div class="proof-lbl">Private data</div></div>
+  </div>
+</section>
+
+<!-- ─ DASHBOARD MOCKUP ──────────────────────────────────── -->
+<div class="mockup-wrap sr">
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="bdot" style="background:#f43f5e"></div>
+      <div class="bdot" style="background:#fbbf24"></div>
+      <div class="bdot" style="background:#a3e635"></div>
+      <div class="burl">tradevault-frontend.vercel.app/app</div>
+    </div>
+    <div class="mock-body">
+      <!-- Sidebar -->
+      <div class="m-sidebar">
+        <div class="m-brand">
+          <svg width="17" height="17" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#g1)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#g1)" stroke-width="1.2"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#22d3ee"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#22d3ee"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" fill="none"/></svg>
+          Trade<span>Vault</span>
+        </div>
+        <div class="m-section-lbl">Overview</div>
+        <div class="m-link active">⊞ Dashboard</div>
+        <div class="m-section-lbl">Trading</div>
+        <div class="m-link">⇋ Trades</div>
+        <div class="m-link">↑ Analytics</div>
+        <div class="m-link">▦ Calendar</div>
+        <div class="m-section-lbl">Tools</div>
+        <div class="m-link">≡ Journal</div>
+        <div class="m-link">↓ Import</div>
+        <div class="m-link">⟳ Brokers</div>
+      </div>
+      <!-- Main -->
+      <div class="m-main">
+        <div class="m-topbar">
+          <div class="m-title">Dashboard</div>
+          <div class="m-add">+ Add Trade</div>
+        </div>
+        <div class="m-stats">
+          <div class="m-stat"><div class="m-stat-lbl">Total P&L</div><div class="m-stat-val" style="color:#a3e635">+$4,821</div></div>
+          <div class="m-stat"><div class="m-stat-lbl">Win Rate</div><div class="m-stat-val">68.4%</div></div>
+          <div class="m-stat"><div class="m-stat-lbl">Avg Win</div><div class="m-stat-val" style="color:#a3e635">$312</div></div>
+          <div class="m-stat"><div class="m-stat-lbl">Avg Loss</div><div class="m-stat-val" style="color:#f43f5e">$141</div></div>
+        </div>
+        <div class="m-rows">
+          <div class="m-row"><div class="m-row-left"><div class="m-sym">NVDA<span class="m-badge lb">Long</span></div><div class="m-meta">Feb 21 · Stock · Breakout</div></div><div class="m-pnl" style="color:#a3e635">+$842.00</div></div>
+          <div class="m-row"><div class="m-row-left"><div class="m-sym">EUR/USD<span class="m-badge sb">Short</span></div><div class="m-meta">Feb 20 · Forex · Trend</div></div><div class="m-pnl" style="color:#f43f5e">−$130.00</div></div>
+          <div class="m-row"><div class="m-row-left"><div class="m-sym">BTC/USD<span class="m-badge lb">Long</span></div><div class="m-meta">Feb 19 · Crypto · Momentum</div></div><div class="m-pnl" style="color:#a3e635">+$1,240.00</div></div>
+          <div class="m-row"><div class="m-row-left"><div class="m-sym">AAPL<span class="m-badge lb">Long</span></div><div class="m-meta">Feb 18 · Stock · Earnings</div></div><div class="m-pnl" style="color:#a3e635">+$318.00</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─ FEATURES ──────────────────────────────────────────── -->
+<section class="section-dark" id="features" style="padding: 6rem 6%">
+  <div class="s-inner">
+    <div class="s-tag sr">Features</div>
+    <h2 class="s-title sr d1">Everything serious traders<br>actually need.</h2>
+    <p class="s-sub sr d2">Built from scratch for traders — not ported from a generic spreadsheet. Every feature exists because it produces measurable results.</p>
+
+    <div class="feat-grid">
+      <div class="feat-card sr d1">
+        <div class="feat-icon">📊</div>
+        <div class="feat-title">Trade Journal</div>
+        <div class="feat-desc">Log every trade with symbol, entry/exit prices, quantity, direction, strategy, and notes. P&L, commissions, and R-multiple are calculated for you automatically — no formulas to maintain.</div>
+      </div>
+      <div class="feat-card sr d2">
+        <div class="feat-icon">📈</div>
+        <div class="feat-title">Performance Analytics</div>
+        <div class="feat-desc">Win rate, profit factor, avg win/loss, R-multiple, and full breakdown by strategy and asset class. See exactly where your edge lives and where you're leaking money — with one glance.</div>
+      </div>
+      <div class="feat-card sr d3">
+        <div class="feat-icon">📅</div>
+        <div class="feat-title">P&L Calendar</div>
+        <div class="feat-desc">A visual monthly heatmap showing profit and loss by trading day. Instantly spot your best weeks, worst Mondays, and patterns you'd never find in a spreadsheet.</div>
+      </div>
+      <div class="feat-card sr d1">
+        <div class="feat-icon">📝</div>
+        <div class="feat-title">Daily Journal</div>
+        <div class="feat-desc">Write dated journal entries to document mindset, discipline failures, and lessons. Trading is 50% psychology — tracking yours is the fastest way to stop making emotional mistakes.</div>
+      </div>
+      <div class="feat-card sr d2">
+        <div class="feat-icon">📁</div>
+        <div class="feat-title">CSV Import</div>
+        <div class="feat-desc">Import your existing trade history from any broker in seconds. Preview every row before committing. Supports 20+ column formats — duplicates are detected and skipped automatically.</div>
+      </div>
+      <div class="feat-card sr d3">
+        <div class="feat-icon">🔌</div>
+        <div class="feat-title">Broker Auto-Sync</div>
+        <div class="feat-desc">Connect Alpaca or Binance to pull completed trades automatically. Your API keys are stored server-side and never exposed to the browser. One click, always up-to-date.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─ ANALYTICS SPLIT ────────────────────────────────────── -->
+<section>
+  <div class="s-inner">
+    <div class="split-grid">
+      <div>
+        <div class="s-tag sr">Analytics</div>
+        <h2 class="s-title sr d1">Know exactly what<br>drives your edge.</h2>
+        <p class="s-sub sr d2" style="margin-bottom:1.75rem">Stop guessing why some weeks are green and others red. TradeVault shows you the real patterns hiding inside your data.</p>
+
+        <div class="chart-card sr d3">
+          <div class="chart-lbl">Cumulative P&L — Last 30 days</div>
+          <div class="chart-val">+$4,821.40</div>
+          <div class="chart-sub">42 trades · 68.4% win rate</div>
+          <div class="chart-bars">
+            <div class="cbar" style="height:22%;background:var(--red)"></div>
+            <div class="cbar" style="height:40%;background:var(--green)"></div>
+            <div class="cbar" style="height:30%;background:var(--red)"></div>
+            <div class="cbar" style="height:62%;background:var(--green)"></div>
+            <div class="cbar" style="height:75%;background:var(--green)"></div>
+            <div class="cbar" style="height:50%;background:var(--red)"></div>
+            <div class="cbar" style="height:88%;background:var(--green)"></div>
+            <div class="cbar" style="height:72%;background:var(--green)"></div>
+            <div class="cbar" style="height:38%;background:var(--red)"></div>
+            <div class="cbar" style="height:95%;background:var(--green)"></div>
+            <div class="cbar" style="height:82%;background:var(--green)"></div>
+            <div class="cbar" style="height:100%;background:var(--green)"></div>
+          </div>
+          <div class="chart-fade"></div>
+        </div>
+
+        <div class="strat-table sr d4" style="margin-top:1rem">
+          <div class="strat-row"><span class="strat-name">Breakout</span><div class="strat-bar-wrap"><div class="strat-bar" style="width:88%"></div></div><span class="strat-pnl" style="color:var(--green)">+$2,410</span></div>
+          <div class="strat-row"><span class="strat-name">Trend Follow</span><div class="strat-bar-wrap"><div class="strat-bar" style="width:64%"></div></div><span class="strat-pnl" style="color:var(--green)">+$1,620</span></div>
+          <div class="strat-row"><span class="strat-name">Earnings Play</span><div class="strat-bar-wrap"><div class="strat-bar" style="width:28%;background:var(--red)"></div></div><span class="strat-pnl" style="color:var(--red)">−$410</span></div>
+        </div>
+      </div>
+
+      <div class="split-points">
+        <div class="spoint sr d1">
+          <div class="spoint-icon">🎯</div>
+          <div>
+            <div class="spoint-title">Strategy breakdown</div>
+            <div class="spoint-desc">See which setups are actually profitable. Compare win rate, avg P&L, and profit factor for every strategy name you use — and cut the losers.</div>
+          </div>
+        </div>
+        <div class="spoint sr d2">
+          <div class="spoint-icon">📆</div>
+          <div>
+            <div class="spoint-title">Day & time patterns</div>
+            <div class="spoint-desc">Discover your best and worst trading hours. If you consistently lose during the open, you'll see it — and can eliminate it before it costs more.</div>
+          </div>
+        </div>
+        <div class="spoint sr d3">
+          <div class="spoint-icon">⚡</div>
+          <div>
+            <div class="spoint-title">Asset class performance</div>
+            <div class="spoint-desc">Compare stocks, forex, crypto, futures, and options side by side. Double down on your strongest markets, size down where you're leaking.</div>
+          </div>
+        </div>
+        <div class="spoint sr d4">
+          <div class="spoint-icon">📉</div>
+          <div>
+            <div class="spoint-title">R-Multiple tracking</div>
+            <div class="spoint-desc">Calculated automatically on every trade. Know whether your winners are genuinely larger than your losers — not just by win rate, but by the math that matters.</div>
+          </div>
+        </div>
+        <div class="spoint sr d5">
+          <div class="spoint-icon">🗓️</div>
+          <div>
+            <div class="spoint-title">Drawdown awareness</div>
+            <div class="spoint-desc">Track losing streaks and drawdown periods on your P&L calendar. Stop digging deeper holes — see the pattern before it becomes a blown account.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─ HOW IT WORKS ───────────────────────────────────────── -->
+<section class="section-dark" id="how-it-works" style="padding: 6rem 6%">
+  <div class="s-inner center">
+    <div class="s-tag sr">How it works</div>
+    <h2 class="s-title sr d1">Up and running in 3 minutes.</h2>
+    <p class="s-sub sr d2">No complicated onboarding. No tutorial videos. Just sign up and start logging.</p>
+    <div class="steps">
+      <div class="step sr d1">
+        <div class="step-num">1</div>
+        <div class="step-title">Create your free account</div>
+        <div class="step-desc">Sign up with email or Google in under 60 seconds. No credit card, no expiry. Your journal is private from day one — we don't share or sell your data.</div>
+      </div>
+      <div class="step sr d2">
+        <div class="step-num">2</div>
+        <div class="step-title">Add your first trades</div>
+        <div class="step-desc">Log manually in seconds, upload a CSV from your broker, or connect Alpaca/Binance to sync automatically. P&L and commissions are calculated for you instantly.</div>
+      </div>
+      <div class="step sr d3">
+        <div class="step-num">3</div>
+        <div class="step-title">Find your edge</div>
+        <div class="step-desc">Use the analytics dashboard and P&L calendar to find your real patterns. Trade what works, cut what doesn't. Watch your account grow week over week.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─ METRICS ────────────────────────────────────────────── -->
+<section>
+  <div class="s-inner">
+    <div class="metrics-grid">
+      <div class="metric sr">
+        <div class="metric-num">2.4×</div>
+        <div class="metric-lbl">Higher avg profit factor for traders who journal consistently</div>
+      </div>
+      <div class="metric sr d1">
+        <div class="metric-num">68%</div>
+        <div class="metric-lbl">Of active journalers improve their win rate within 30 days</div>
+      </div>
+      <div class="metric sr d2">
+        <div class="metric-num">$0</div>
+        <div class="metric-lbl">Forever free tier — no bait and switch, no expiry, no card needed</div>
+      </div>
+      <div class="metric sr d3">
+        <div class="metric-num">6</div>
+        <div class="metric-lbl">Asset classes tracked: stocks, forex, crypto, futures, options & more</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─ TESTIMONIALS ───────────────────────────────────────── -->
+<section class="section-dark" style="padding: 6rem 6%">
+  <div class="s-inner center">
+    <div class="s-tag sr">Testimonials</div>
+    <h2 class="s-title sr d1">Traders trust TradeVault.</h2>
+    <div class="testi-grid">
+      <div class="tcard sr d1">
+        <div class="tcard-stars">★★★★★</div>
+        <div class="tcard-quote">Finally a journal that doesn't feel like maintaining a spreadsheet. The calendar view alone changed how I review my weeks. Win rate went from 48% to 61% in two months of real journaling.</div>
+        <div class="tcard-author">
+          <div class="tcard-av">M</div>
+          <div><div class="tcard-name">Marcus T.</div><div class="tcard-role">Forex Trader · 3 yrs experience</div></div>
+        </div>
+      </div>
+      <div class="tcard sr d2">
+        <div class="tcard-stars">★★★★★</div>
+        <div class="tcard-quote">The analytics tab is incredible. Realized my Monday trades were costing me $800/month on average. Cut Monday trading entirely — P&L improved immediately. Paid for a year of Pro in the first week.</div>
+        <div class="tcard-author">
+          <div class="tcard-av">S</div>
+          <div><div class="tcard-name">Sarah K.</div><div class="tcard-role">Swing Trader · Stocks & Options</div></div>
+        </div>
+      </div>
+      <div class="tcard sr d3">
+        <div class="tcard-stars">★★★★★</div>
+        <div class="tcard-quote">Moved from a 2-year-old Google Sheet. The time saved logging plus extra analytics insights made this a no-brainer. I actually use it every single day now — that's never happened with any other tool.</div>
+        <div class="tcard-author">
+          <div class="tcard-av">D</div>
+          <div><div class="tcard-name">Daniel R.</div><div class="tcard-role">Crypto Day Trader</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─ PRICING ────────────────────────────────────────────── -->
+<section id="pricing">
+  <div class="s-inner center">
+    <div class="s-tag sr">Pricing</div>
+    <h2 class="s-title sr d1">Simple. Honest. No surprises.</h2>
+    <p class="s-sub sr d2">Our free tier is genuinely free — forever. No trial, no expiry, no "gotcha" upgrade prompts.</p>
+
+    <div class="pricing-grid">
+      <div class="pcard sr d1">
+        <div class="pcard-tier">Free</div>
+        <div class="pcard-price">$0 <sub>/ forever</sub></div>
+        <div class="pcard-desc">Everything you need to build a real trading journal and start discovering your edge. No limits, no expiry.</div>
+        <ul class="pcard-list">
+          <li>Unlimited manual trades</li>
+          <li>Full dashboard & stat cards</li>
+          <li>Performance analytics</li>
+          <li>P&L calendar view</li>
+          <li>Daily journal entries</li>
+          <li>CSV import (up to 5,000 rows)</li>
+          <li>Full data export anytime</li>
+          <li>Edit & delete trades</li>
+          <li class="na">Broker auto-sync</li>
+          <li class="na">Advanced strategy reports</li>
+        </ul>
+        <a href="/login" class="btn btn-outline-green pcard-btn">Start free →</a>
+      </div>
+      <div class="pcard pro sr d2">
+        <div class="pcard-ribbon">Coming soon</div>
+        <div class="pcard-tier">Pro</div>
+        <div class="pcard-price">$12 <sub>/ month</sub></div>
+        <div class="pcard-desc">For traders who want full automation and deeper insights — without paying $49/month like the other guys charge.</div>
+        <ul class="pcard-list">
+          <li>Everything in Free</li>
+          <li>Broker auto-sync (Alpaca, Binance)</li>
+          <li>Advanced analytics reports</li>
+          <li>Strategy comparison tools</li>
+          <li>Drawdown & risk tracking</li>
+          <li>R-multiple deep analysis</li>
+          <li>Priority support</li>
+          <li>Early access to new features</li>
+        </ul>
+        <button class="btn btn-ghost pcard-btn" style="opacity:.5;cursor:not-allowed">Notify me when live</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─ FAQ ────────────────────────────────────────────────── -->
+<section class="section-dark" id="faq" style="padding: 6rem 6%">
+  <div class="s-inner center">
+    <div class="s-tag sr">FAQ</div>
+    <h2 class="s-title sr d1">Common questions.</h2>
+
+    <div class="faq-wrap">
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">Is TradeVault actually free?<span class="faq-arrow">▼</span></button>
+        <div class="faq-body"><p>Yes — the Free tier has no expiry date, no credit card required, and no limits on manual trades. We'll offer a Pro plan with advanced automation features, but the core journal is free forever.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">Is my trading data private and secure?<span class="faq-arrow">▼</span></button>
+        <div class="faq-body"><p>Completely. Your trades, journal entries, and account details are visible only to you. We don't sell data, run ads, or share anything with third parties. You can export or delete all your data at any time from your profile.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">Which brokers and asset classes are supported?<span class="faq-arrow">▼</span></button>
+        <div class="faq-body"><p>Auto-sync currently supports Alpaca and Binance. Any broker that lets you export a CSV is supported via file upload — we detect most column formats automatically. We support stocks, forex, crypto, futures, options, and more.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">How do I import my existing trade history?<span class="faq-arrow">▼</span></button>
+        <div class="faq-body"><p>Export a CSV from your broker and upload it in the Import tab. TradeVault shows you a full preview before saving anything — you can review every row, and duplicate trades are automatically skipped if you re-import later.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">Is TradeVault a broker or financial advisor?<span class="faq-arrow">▼</span></button>
+        <div class="faq-body"><p>No. TradeVault is purely a journaling and analytics tool. You trade on your own broker and track the results here. We never touch your money, execute trades, or provide investment advice.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">Can I use TradeVault on mobile?<span class="faq-arrow">▼</span></button>
+        <div class="faq-body"><p>Yes — the app is fully responsive with a dedicated mobile experience including a bottom navigation bar, a quick-add FAB button for logging trades, and bottom sheet modals optimized for touch screens.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─ FINAL CTA ───────────────────────────────────────────── -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <h2 class="sr"><em>Stop</em> trading blind.</h2>
+  <p class="sr d1">Join traders who use data — not gut feeling — to grow their accounts. Sign up in 60 seconds, free forever.</p>
+  <div class="cta-btns sr d2">
+    <a href="/login" class="btn btn-green btn-lg">Create your free account →</a>
+    <a href="/login" class="btn btn-ghost btn-lg">Log in</a>
+  </div>
+  <p class="cta-fine sr d3">Free forever · No credit card · 100% private data · Delete anytime</p>
+</section>
+
+<!-- ─ FOOTER ─────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <a href="/" style="display:inline-flex;align-items:center;gap:.55rem;text-decoration:none">
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#g2)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#g2)" stroke-width="1.2"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#22d3ee"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#22d3ee"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" fill="none"/></svg>
+        <span style="font-family:'Cabinet Grotesk',sans-serif;font-size:1rem;font-weight:900;color:var(--txt)">Trade<span style="color:var(--green)">Vault</span></span>
+      </a>
+      <div class="footer-brand-desc">The professional trading journal for traders who are serious about performance. Free to start. Yours to keep.</div>
+    </div>
+    <div class="footer-col">
+      <h5>Product</h5>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Account</h5>
+      <ul>
+        <li><a href="/login">Sign up free</a></li>
+        <li><a href="/login">Log in</a></li>
+        <li><a href="/app">Dashboard</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Legal</h5>
+      <ul>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-risk">Trading involves substantial risk and is not suitable for all investors. Past performance is not indicative of future results. TradeVault is a journaling and analytics tool only — we are not a broker, investment advisor, or financial service. Trade responsibly.</div>
+  <div class="footer-bottom">
+    <span>© 2026 TradeVault. All rights reserved.</span>
+    <span>Built for traders who want an edge 📈</span>
+  </div>
+</footer>
+
+<script>
+  // ─ Redirect logged-in users straight to dashboard ─
+  try {
+    if (typeof getToken === 'function' && getToken()) {
+      window.location.replace('/app');
+    }
+  } catch(e) {}
+
+  // ─ Scroll reveal ─
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.07 });
+  document.querySelectorAll('.sr').forEach(el => revealObserver.observe(el));
+
+  // ─ Counter animation ─
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      const target = parseInt(el.dataset.target);
+      if (!target) return;
+      counterObserver.unobserve(el);
+      let start = 0;
+      const duration = 1800;
+      const step = target / (duration / 16);
+      const timer = setInterval(() => {
+        start = Math.min(start + step, target);
+        el.textContent = Math.floor(start).toLocaleString();
+        if (start >= target) clearInterval(timer);
+      }, 16);
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-target]').forEach(el => counterObserver.observe(el));
+
+  // ─ FAQ accordion ─
+  function faq(btn) {
+    const body = btn.nextElementSibling;
+    const wasOpen = body.classList.contains('open');
+    document.querySelectorAll('.faq-body.open').forEach(b => b.classList.remove('open'));
+    document.querySelectorAll('.faq-btn.open').forEach(b => b.classList.remove('open'));
+    if (!wasOpen) { body.classList.add('open'); btn.classList.add('open'); }
+  }
+
+  // ─ Sign-up tab intent: auth.html reads this ─
+  document.querySelectorAll('[href="/login"]').forEach(a => {
+    a.addEventListener('click', () => sessionStorage.setItem('tv_tab', 'signup'));
+  });
+  // Login button specifically should open login tab
+  document.querySelector('.btn-ghost[href="/login"]')?.addEventListener('click', (e) => {
+    sessionStorage.setItem('tv_tab', 'login');
+  }, { capture: true });
+  document.querySelector('.nav-actions .btn-ghost')?.addEventListener('click', (e) => {
+    sessionStorage.setItem('tv_tab', 'login');
+  }, { capture: true });
+</script>
 </body>
 </html>

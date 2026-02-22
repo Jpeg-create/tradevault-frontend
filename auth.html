@@ -134,10 +134,18 @@
   <script>
     // ── BOOT ───────────────────────────────────────────────
     if (getToken()) window.location.href = '/app';
+    // Auto-select tab based on what landing page button was clicked
+    (function() {
+      const tab = sessionStorage.getItem('tv_tab');
+      if (tab === 'signup') { sessionStorage.removeItem('tv_tab'); switchTab('signup'); }
+      else if (tab === 'login') { sessionStorage.removeItem('tv_tab'); switchTab('login'); }
+    })();
 
-    // Check for reset token in URL (?reset=TOKEN)
+    // Check URL params — ?mode=signup or ?reset=TOKEN
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('reset')) {
+    if (urlParams.get('mode') === 'signup') {
+      switchTab('signup');
+    } else if (urlParams.get('reset')) {
       document.getElementById('reset-token').value = urlParams.get('reset');
       switchTab('reset');
     }
