@@ -26,7 +26,7 @@ async function request(method, path, body = null, timeoutMs = 35000) {
 
     if (res.status === 401) {
       clearAuth();
-      window.location.href = '/auth.html';
+      window.location.href = '/login';
       return;
     }
 
@@ -83,8 +83,12 @@ const api = {
   syncBroker:   (id)   => request('POST',   `/brokers/${id}/sync`),
 
   // Health ping (used to pre-warm the server)
-  ping: () => fetch(`${CONFIG.API_BASE}/health`, { signal: AbortSignal.timeout(60000) })
-               .then(r => r.json()).catch(() => null),
+  ping: () => {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 60000);
+    return fetch(`${CONFIG.API_BASE}/health`, { signal: ctrl.signal })
+      .then(r => r.json()).catch(() => null);
+  },
 };
 
 window.api = api;

@@ -20,12 +20,93 @@ let state = {
 
 // ── TOAST ─────────────────────────────────────────────────
 function toast(message, type = 'info', duration = 3500) {
+  const container = document.getElementById('toast-container');
+  // Cap at 4 toasts — remove oldest if over limit
+  while (container.children.length >= 4) container.firstChild.remove();
   const icons = { success:'✅', error:'❌', info:'ℹ️', warn:'⚠️' };
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.innerHTML = `<span style="flex-shrink:0">${icons[type]||'ℹ️'}</span><span>${esc(message)}</span>`;
-  document.getElementById('toast-container').appendChild(el);
+  container.appendChild(el);
   setTimeout(() => el.remove(), duration);
+}
+
+
+// ── CUSTOM CONFIRM DIALOG ─────────────────────────────────
+// Replaces native confirm()/prompt() which are blocked on mobile
+function showConfirm(message, onConfirm, opts = {}) {
+  const { confirmLabel = 'Confirm', confirmClass = 'btn-danger',
+          requireInput = null, inputPlaceholder = '' } = opts;
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-msg">${esc(message)}</div>
+      ${requireInput ? `<input class="form-input confirm-input" placeholder="${esc(inputPlaceholder)}" autocomplete="off">` : ''}
+      <div class="confirm-actions">
+        <button class="btn btn-secondary btn-sm confirm-cancel">Cancel</button>
+        <button class="btn ${confirmClass} btn-sm confirm-ok">${esc(confirmLabel)}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const ok     = overlay.querySelector('.confirm-ok');
+  const cancel = overlay.querySelector('.confirm-cancel');
+  const input  = overlay.querySelector('.confirm-input');
+
+  function close() { overlay.remove(); }
+  cancel.onclick = close;
+  overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+  ok.onclick = () => {
+    if (requireInput) {
+      const val = (input?.value || '').trim();
+      if (val !== requireInput) {
+        input.style.borderColor = 'var(--accent-red)';
+        input.placeholder = `Type exactly: ${requireInput}`;
+        input.value = '';
+        return;
+      }
+      close();
+      onConfirm(val);
+    } else {
+      close();
+      onConfirm();
+    }
+  };
+
+  if (input) {
+    input.focus();
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); });
+  } else {
+    // Allow Enter key even without an input
+    overlay.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); if (e.key === 'Escape') close(); });
+    setTimeout(() => ok.focus(), 50);
+  }
+}
+
+function showPrompt(message, onConfirm, placeholder = '') {
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-msg">${esc(message)}</div>
+      <input type="password" class="form-input confirm-input" placeholder="${esc(placeholder)}" autocomplete="current-password">
+      <div class="confirm-actions">
+        <button class="btn btn-secondary btn-sm confirm-cancel">Cancel</button>
+        <button class="btn btn-danger btn-sm confirm-ok">Confirm</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const ok     = overlay.querySelector('.confirm-ok');
+  const cancel = overlay.querySelector('.confirm-cancel');
+  const input  = overlay.querySelector('.confirm-input');
+  function close() { overlay.remove(); }
+  cancel.onclick = close;
+  overlay.onclick = (e) => { if (e.target === overlay) close(); };
+  ok.onclick = () => { close(); onConfirm(input.value); };
+  input.focus();
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); });
 }
 
 // ── BOOT ──────────────────────────────────────────────────
@@ -86,7 +167,7 @@ function render() {
       <!-- ── DESKTOP SIDEBAR ─── -->
       <div class="sidebar">
         <div class="logo">
-          <div class="logo-icon">▣</div>
+          <div class="logo-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vg)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vg)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vg)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vg)"/><circle cx="16" cy="27" r="1.5" fill="url(#vg)"/><circle cx="5" cy="16" r="1.5" fill="url(#vg)"/><circle cx="27" cy="16" r="1.5" fill="url(#vg)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><line x1="10" y1="18" x2="10" y2="19" stroke="#00d4ff" stroke-width="1"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><line x1="14" y1="12" x2="14" y2="14" stroke="#a3e635" stroke-width="1"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><line x1="18" y1="14" x2="18" y2="16" stroke="#00d4ff" stroke-width="1"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><line x1="22" y1="10" x2="22" y2="12" stroke="#a3e635" stroke-width="1"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
           <div class="logo-text">Trade<span>Vault</span></div>
         </div>
         <nav style="flex:1">
@@ -123,7 +204,7 @@ function render() {
         <!-- Mobile top bar -->
         <div class="mobile-topbar">
           <div class="logo" style="margin-bottom:0">
-            <div class="logo-icon" style="width:26px;height:26px;font-size:0.8rem">▣</div>
+            <div class="logo-icon" style="width:26px;height:26px"><svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vgt)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vgt)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vgt)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vgt)"/><circle cx="16" cy="27" r="1.5" fill="url(#vgt)"/><circle cx="5" cy="16" r="1.5" fill="url(#vgt)"/><circle cx="27" cy="16" r="1.5" fill="url(#vgt)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
             <div class="logo-text" style="font-size:1.05rem">Trade<span>Vault</span></div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem">
@@ -149,8 +230,9 @@ function render() {
         <button class="bottom-nav-item ${state.currentView === 'analytics' ? 'active' : ''}" onclick="changeView('analytics')">
           ${NAV_ICONS.analytics}<span>Stats</span>
         </button>
-        <button class="bottom-nav-item ${state.currentView === 'journal' ? 'active' : ''}" onclick="changeView('journal')">
-          ${NAV_ICONS.journal}<span>Journal</span>
+        <button class="bottom-nav-item ${['journal','calendar','import','brokers'].includes(state.currentView) ? 'active' : ''}" onclick="toggleMobileMore()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+          <span>More</span>
         </button>
       </nav>
 
@@ -724,7 +806,10 @@ function tradeModal() {
       <div class="modal-content" onclick="event.stopPropagation()">
         <div class="modal-header">
           <h2 class="modal-title">${isView ? 'Trade Details' : 'New Trade'}</h2>
-          <button class="btn btn-secondary btn-sm" onclick="closeTradeModal()">✕ Close</button>
+          <div style="display:flex;gap:0.5rem">
+            ${isView ? `<button class="btn btn-secondary btn-sm" onclick="editCurrentTrade()">✏ Edit</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="closeTradeModal()">✕ Close</button>
+          </div>
         </div>
 
         <div class="form-row">
@@ -837,11 +922,95 @@ function tradeModal() {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────
-function changeView(v)          { state.currentView = v; render(); }
+function changeView(v) {
+  state.currentView = v;
+  document.getElementById('mobile-more-sheet')?.remove();
+  render();
+  // Scroll main content back to top
+  const mc = document.querySelector('.main-content');
+  if (mc) mc.scrollTop = 0;
+  window.scrollTo(0, 0);
+}
 function openAddTradeModal()    { state.selectedTrade = null; state.showTradeModal = true; render(); }
 function closeTradeModal()      { state.showTradeModal = false; state.selectedTrade = null; render(); }
 function updateFilter(type, val){ type === 'assetType' ? state.filterAssetType = val : state.filterDirection = val; render(); }
 function changeCalendarMonth(d) { const dt = new Date(state.calendarDate); dt.setMonth(dt.getMonth() + d); state.calendarDate = dt; render(); }
+
+function editCurrentTrade() {
+  // Re-open the currently viewed trade in edit mode
+  if (!state.selectedTrade) return;
+  const id = state.selectedTrade.id;
+  const t  = state.trades.find(tr => String(tr.id) === String(id));
+  if (!t) return;
+  state.selectedTrade = null; // open in add-mode but pre-fill
+  state.showTradeModal = true;
+  state._editingTrade = t;    // store for prefill
+  render();
+  // pre-fill fields after render
+  const fmtDT = dt => dt ? new Date(dt).toISOString().slice(0, 16) : '';
+  requestAnimationFrame(() => {
+    if (document.getElementById('t-sym'))   document.getElementById('t-sym').value   = t.symbol || '';
+    if (document.getElementById('t-at'))    document.getElementById('t-at').value    = t.asset_type || 'stock';
+    if (document.getElementById('t-dir'))   document.getElementById('t-dir').value   = t.direction || 'long';
+    if (document.getElementById('t-ep'))    document.getElementById('t-ep').value    = t.entry_price || '';
+    if (document.getElementById('t-xp'))    document.getElementById('t-xp').value    = t.exit_price  || '';
+    if (document.getElementById('t-qty'))   document.getElementById('t-qty').value   = t.quantity    || '';
+    if (document.getElementById('t-sl'))    document.getElementById('t-sl').value    = t.stop_loss   || '';
+    if (document.getElementById('t-tp'))    document.getElementById('t-tp').value    = t.take_profit || '';
+    if (document.getElementById('t-com'))   document.getElementById('t-com').value   = t.commission  || '';
+    if (document.getElementById('t-ed'))    document.getElementById('t-ed').value    = fmtDT(t.entry_date);
+    if (document.getElementById('t-xd'))    document.getElementById('t-xd').value    = fmtDT(t.exit_date);
+    if (document.getElementById('t-strat')) document.getElementById('t-strat').value = t.strategy    || '';
+    if (document.getElementById('t-cond'))  document.getElementById('t-cond').value  = t.market_conditions || '';
+    if (document.getElementById('t-notes')) document.getElementById('t-notes').value = t.notes       || '';
+    // Switch save button to update mode
+    const btn = document.getElementById('save-btn');
+    if (btn) { btn.textContent = 'Update Trade'; btn.onclick = () => doUpdateTrade(t.id); }
+    // Update title
+    const title = document.querySelector('.modal-title');
+    if (title) title.textContent = 'Edit Trade';
+  });
+}
+
+async function doUpdateTrade(id) {
+  const btn = document.getElementById('save-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…'; }
+  const sym = (document.getElementById('t-sym').value || '').trim().toUpperCase();
+  const ep  = parseFloat(document.getElementById('t-ep').value);
+  const xp  = parseFloat(document.getElementById('t-xp').value);
+  const qty = parseFloat(document.getElementById('t-qty').value);
+  if (!sym || isNaN(ep) || isNaN(xp) || isNaN(qty)) {
+    toast('Symbol, entry price, exit price and quantity are required', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Update Trade'; }
+    return;
+  }
+  try {
+    state.syncing = true;
+    const res = await api.updateTrade(id, {
+      symbol:            sym,
+      entry_price:       ep, exit_price: xp, quantity: qty,
+      asset_type:        document.getElementById('t-at').value,
+      direction:         document.getElementById('t-dir').value,
+      commission:        parseFloat(document.getElementById('t-com').value) || 0,
+      entry_date:        document.getElementById('t-ed').value  || null,
+      exit_date:         document.getElementById('t-xd').value  || null,
+      stop_loss:         parseFloat(document.getElementById('t-sl').value)   || null,
+      take_profit:       parseFloat(document.getElementById('t-tp').value)   || null,
+      strategy:          document.getElementById('t-strat').value || null,
+      notes:             document.getElementById('t-notes').value || null,
+      market_conditions: document.getElementById('t-cond').value  || null,
+    });
+    const idx = state.trades.findIndex(t => String(t.id) === String(id));
+    if (idx >= 0) state.trades[idx] = res.data;
+    state.syncing = false;
+    toast(`${sym} updated!`, 'success');
+    closeTradeModal();
+  } catch (err) {
+    state.syncing = false;
+    toast(`Update failed: ${err.message}`, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Update Trade'; }
+  }
+}
 
 function viewTrade(id) {
   state.selectedTrade = state.trades.find(t => String(t.id) === String(id)) || null;
@@ -900,7 +1069,7 @@ async function doSaveTrade() {
     });
     state.trades.unshift(res.data);
     state.syncing = false;
-    toast(`${sym} saved — ${res.data.pnl >= 0 ? '+' : ''}$${Number(res.data.pnl).toFixed(2)}`, 'success');
+    toast(`${sym} saved — ${Number(res.data.pnl) >= 0 ? '+' : ''}$${Number(res.data.pnl).toFixed(2)}`, 'success');
     closeTradeModal();
   } catch (err) {
     state.syncing = false;
@@ -910,18 +1079,19 @@ async function doSaveTrade() {
 }
 
 async function doDeleteTrade(id) {
-  if (!confirm('Delete this trade? This cannot be undone.')) return;
-  try {
-    state.syncing = true;
-    await api.deleteTrade(id);
-    state.trades = state.trades.filter(t => String(t.id) !== String(id));
-    state.syncing = false;
-    toast('Trade deleted', 'info');
-    render();
-  } catch (err) {
-    state.syncing = false;
-    toast(`Delete failed: ${err.message}`, 'error');
-  }
+  showConfirm('Delete this trade? This cannot be undone.', async () => {
+    try {
+      state.syncing = true;
+      await api.deleteTrade(id);
+      state.trades = state.trades.filter(t => String(t.id) !== String(id));
+      state.syncing = false;
+      toast('Trade deleted', 'info');
+      render();
+    } catch (err) {
+      state.syncing = false;
+      toast(`Delete failed: ${err.message}`, 'error');
+    }
+  });
 }
 
 // ── JOURNAL ACTIONS ───────────────────────────────────────
@@ -948,15 +1118,16 @@ async function doSaveJournal() {
 }
 
 async function doDeleteJournal(id) {
-  if (!confirm('Delete this journal entry?')) return;
-  try {
-    await api.deleteJournal(id);
-    state.journalEntries = state.journalEntries.filter(e => String(e.id) !== String(id));
-    toast('Entry deleted', 'info');
-    render();
-  } catch (err) {
-    toast(`Delete failed: ${err.message}`, 'error');
-  }
+  showConfirm('Delete this journal entry?', async () => {
+    try {
+      await api.deleteJournal(id);
+      state.journalEntries = state.journalEntries.filter(e => String(e.id) !== String(id));
+      toast('Entry deleted', 'info');
+      render();
+    } catch (err) {
+      toast(`Delete failed: ${err.message}`, 'error');
+    }
+  });
 }
 
 // ── CSV IMPORT ────────────────────────────────────────────
@@ -1042,15 +1213,16 @@ async function doSyncBroker(id, name) {
 }
 
 async function doDeleteBroker(id) {
-  if (!confirm('Remove this broker connection?')) return;
-  try {
-    await api.deleteBroker(id);
-    state.brokers = state.brokers.filter(b => b.id !== id);
-    toast('Broker removed', 'info');
-    render();
-  } catch (err) {
-    toast(`Delete failed: ${err.message}`, 'error');
-  }
+  showConfirm('Remove this broker connection?', async () => {
+    try {
+      await api.deleteBroker(id);
+      state.brokers = state.brokers.filter(b => b.id !== id);
+      toast('Broker removed', 'info');
+      render();
+    } catch (err) {
+      toast(`Delete failed: ${err.message}`, 'error');
+    }
+  }, { confirmLabel: 'Remove', confirmClass: 'btn-danger' });
 }
 
 
@@ -1059,8 +1231,9 @@ function openProfileModal()  { state.showProfileModal = true;  render(); }
 function closeProfileModal() { state.showProfileModal = false; render(); }
 
 function profileModal() {
-  const user = getUser() || {};
+  const user    = getUser() || {};
   const initial = (user.name || 'U').charAt(0).toUpperCase();
+  const ps      = calcStats(state.trades); // compute once
   return `
     <div class="modal" onclick="closeProfileModal()">
       <div class="modal-content" style="max-width:520px" onclick="event.stopPropagation()">
@@ -1090,13 +1263,13 @@ function profileModal() {
             <div class="profile-stat-label">Journal Entries</div>
           </div>
           <div class="profile-stat">
-            <div class="profile-stat-value ${calcStats(state.trades).totalPnL >= 0 ? 'positive' : 'negative'}">
-              ${calcStats(state.trades).totalPnL >= 0 ? '+' : ''}$${calcStats(state.trades).totalPnL.toFixed(0)}
+            <div class="profile-stat-value ${ps.totalPnL >= 0 ? 'positive' : 'negative'}">
+              ${ps.totalPnL >= 0 ? '+' : ''}$${ps.totalPnL.toFixed(0)}
             </div>
             <div class="profile-stat-label">Total P&L</div>
           </div>
           <div class="profile-stat">
-            <div class="profile-stat-value">${calcStats(state.trades).winRate}%</div>
+            <div class="profile-stat-value">${ps.winRate}%</div>
             <div class="profile-stat-label">Win Rate</div>
           </div>
         </div>
@@ -1210,25 +1383,61 @@ function doExportData() {
 }
 
 async function doDeleteAccount() {
-  const confirmText = prompt('Type DELETE (all caps) to permanently delete your account and all data. This cannot be undone.');
-  if (confirmText !== 'DELETE') { toast('Account deletion cancelled', 'info'); return; }
-  const password = prompt('Enter your password to confirm:');
-  if (password === null) return;
-  try {
-    await api.deleteAccount({ password, confirmText });
-    toast('Account deleted. Goodbye!', 'info', 3000);
-    setTimeout(() => { clearAuth(); window.location.href = '/auth.html'; }, 2000);
-  } catch (err) {
-    toast(err.message, 'error');
-  }
+  showConfirm(
+    'This will permanently delete your account and all trade data. This cannot be undone.',
+    () => {
+      showPrompt('Enter your password to confirm deletion:', async (password) => {
+        if (!password) return;
+        try {
+          await api.deleteAccount({ password, confirmText: 'DELETE' });
+          toast('Account deleted. Goodbye!', 'info', 3000);
+          setTimeout(() => { clearAuth(); window.location.href = '/login'; }, 2000);
+        } catch (err) {
+          toast(err.message, 'error');
+        }
+      }, 'Your password');
+    },
+    { confirmLabel: 'Continue', confirmClass: 'btn-danger',
+      requireInput: 'DELETE', inputPlaceholder: 'Type DELETE to confirm' }
+  );
 }
 
 // ── AUTH ──────────────────────────────────────────────────
 function handleLogout() {
-  if (confirm('Log out of TradeVault?')) {
+  showConfirm('Log out of TradeVault?', () => {
     clearAuth();
-    window.location.href = '/auth.html';
-  }
+    window.location.href = '/login';
+  }, { confirmLabel: 'Log out', confirmClass: 'btn-secondary' });
+}
+
+// ── MOBILE MORE SHEET ─────────────────────────────────────
+function toggleMobileMore() {
+  const existing = document.getElementById('mobile-more-sheet');
+  if (existing) { existing.remove(); return; }
+  const sheet = document.createElement('div');
+  sheet.id = 'mobile-more-sheet';
+  sheet.className = 'mobile-more-sheet';
+  const items = [
+    { id: 'journal',  label: 'Journal',  icon: NAV_ICONS.journal },
+    { id: 'calendar', label: 'Calendar', icon: NAV_ICONS.calendar },
+    { id: 'import',   label: 'Import',   icon: NAV_ICONS.import },
+    { id: 'brokers',  label: 'Brokers',  icon: NAV_ICONS.brokers },
+  ];
+  sheet.innerHTML = `
+    <div class="mobile-more-backdrop" onclick="this.parentElement.remove()"></div>
+    <div class="mobile-more-content">
+      <div class="mobile-more-handle"></div>
+      <div class="mobile-more-title">More</div>
+      <div class="mobile-more-grid">
+        ${items.map(item => `
+          <button class="mobile-more-item ${state.currentView === item.id ? 'active' : ''}"
+            onclick="document.getElementById('mobile-more-sheet')?.remove(); changeView('${item.id}')">
+            <span class="mobile-more-icon">${item.icon}</span>
+            <span>${item.label}</span>
+          </button>`).join('')}
+      </div>
+    </div>`;
+  document.body.appendChild(sheet);
 }
 
 // ── INIT ──────────────────────────────────────────────────

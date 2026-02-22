@@ -13,7 +13,7 @@
   <div class="auth-box">
 
     <div class="auth-header">
-      <div class="auth-logo"><div class="auth-logo-icon">▣</div><div class="auth-logo-text">Trade<span>Vault</span></div></div>
+      <div class="auth-logo"><div class="auth-logo-icon"><svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="24" cy="24" r="21" stroke="url(#vgl)" stroke-width="2.5" fill="rgba(0,212,255,0.05)"/><circle cx="24" cy="24" r="15" stroke="url(#vgl)" stroke-width="1.5" fill="rgba(0,212,255,0.04)"/><line x1="3" y1="24" x2="9" y2="24" stroke="url(#vgl)" stroke-width="2.5" stroke-linecap="round"/><circle cx="24" cy="7" r="2" fill="url(#vgl)"/><circle cx="24" cy="41" r="2" fill="url(#vgl)"/><circle cx="7" cy="24" r="2" fill="url(#vgl)"/><circle cx="41" cy="24" r="2" fill="url(#vgl)"/><rect x="13" y="28" width="3" height="6" rx="0.5" fill="#00d4ff"/><line x1="14.5" y1="26" x2="14.5" y2="28" stroke="#00d4ff" stroke-width="1.2"/><rect x="19" y="21" width="3" height="10" rx="0.5" fill="#a3e635"/><line x1="20.5" y1="18" x2="20.5" y2="21" stroke="#a3e635" stroke-width="1.2"/><rect x="25" y="24" width="3" height="8" rx="0.5" fill="#00d4ff"/><line x1="26.5" y1="21" x2="26.5" y2="24" stroke="#00d4ff" stroke-width="1.2"/><rect x="31" y="17" width="3" height="13" rx="0.5" fill="#a3e635"/><line x1="32.5" y1="14" x2="32.5" y2="17" stroke="#a3e635" stroke-width="1.2"/><polyline points="13,29 19,22 25,25 32,15" stroke="#a3e635" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><div class="auth-logo-text">Trade<span>Vault</span></div></div>
       <div class="auth-tagline">Your professional trading journal</div>
     </div>
 
@@ -133,7 +133,7 @@
   <script src="/js/api.js"></script>
   <script>
     // ── BOOT ───────────────────────────────────────────────
-    if (getToken()) window.location.href = '/index.html';
+    if (getToken()) window.location.href = '/app';
 
     // Check for reset token in URL (?reset=TOKEN)
     const urlParams = new URLSearchParams(window.location.search);
@@ -226,7 +226,7 @@
       try {
         const res = await api.login({ email, password });
         saveAuth(res.token, res.user);
-        window.location.href = '/index.html';
+        window.location.href = '/app';
       } catch (err) {
         showError(err.message);
         setBtnLoading('login-btn', false, 'Login');
@@ -246,7 +246,7 @@
       try {
         const res = await api.signup({ name, email, password });
         saveAuth(res.token, res.user);
-        window.location.href = '/index.html';
+        window.location.href = '/app';
       } catch (err) {
         showError(err.message);
         setBtnLoading('signup-btn', false, 'Create Account');
@@ -340,7 +340,7 @@
           try {
             const res = await api.googleLogin({ credential: response.credential });
             saveAuth(res.token, res.user);
-            window.location.href = '/index.html';
+            window.location.href = '/app';
           } catch (err) { showError(err.message); }
         }
       });
