@@ -60,23 +60,46 @@ function calcStats(trades) {
 }
 
 // ── RENDER ────────────────────────────────────────────────
+// SVG icon helpers
+const NAV_ICONS = {
+  dashboard: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+  trades:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+  analytics: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+  calendar:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  journal:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  import:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  brokers:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
+  profile:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+};
+
+// Bottom nav tabs shown on mobile (most used 5)
+const BOTTOM_NAV = ['dashboard','trades','analytics','journal','profile'];
+
 function render() {
   const app = document.getElementById('app');
   const stats = calcStats(state.trades);
-  const views = ['dashboard','trades','analytics','calendar','journal','import','brokers'];
-  const icons  = { dashboard:'📊',trades:'💹',analytics:'📈',calendar:'📅',journal:'📝',import:'📁',brokers:'🔌' };
-  const labels = { dashboard:'Dashboard',trades:'Trades',analytics:'Analytics',calendar:'Calendar',journal:'Journal',import:'Import',brokers:'Brokers' };
   const user = getUser() || {};
 
   app.innerHTML = `
     <div class="app-container">
+
+      <!-- ── DESKTOP SIDEBAR ─── -->
       <div class="sidebar">
-        <div class="logo">TradeVault</div>
-        <nav>
-          ${views.map(v => `
-            <div class="nav-item ${state.currentView === v ? 'active' : ''}" onclick="changeView('${v}')">
-              <span class="nav-icon">${icons[v]}</span> ${labels[v]}
-            </div>`).join('')}
+        <div class="logo">
+          <div class="logo-icon">▣</div>
+          <div class="logo-text">Trade<span>Vault</span></div>
+        </div>
+        <nav style="flex:1">
+          <div class="nav-section-label">OVERVIEW</div>
+          <button class="nav-item ${state.currentView === 'dashboard' ? 'active' : ''}" onclick="changeView('dashboard')"><span class="nav-icon">${NAV_ICONS.dashboard}</span>Dashboard</button>
+          <div class="nav-section-label">TRADING</div>
+          <button class="nav-item ${state.currentView === 'trades'    ? 'active' : ''}" onclick="changeView('trades')"   ><span class="nav-icon">${NAV_ICONS.trades}</span>Trades</button>
+          <button class="nav-item ${state.currentView === 'analytics' ? 'active' : ''}" onclick="changeView('analytics')"><span class="nav-icon">${NAV_ICONS.analytics}</span>Analytics</button>
+          <button class="nav-item ${state.currentView === 'calendar'  ? 'active' : ''}" onclick="changeView('calendar') "><span class="nav-icon">${NAV_ICONS.calendar}</span>Calendar</button>
+          <div class="nav-section-label">TOOLS</div>
+          <button class="nav-item ${state.currentView === 'journal'   ? 'active' : ''}" onclick="changeView('journal')  "><span class="nav-icon">${NAV_ICONS.journal}</span>Journal</button>
+          <button class="nav-item ${state.currentView === 'import'    ? 'active' : ''}" onclick="changeView('import')   "><span class="nav-icon">${NAV_ICONS.import}</span>Import</button>
+          <button class="nav-item ${state.currentView === 'brokers'   ? 'active' : ''}" onclick="changeView('brokers')  "><span class="nav-icon">${NAV_ICONS.brokers}</span>Brokers</button>
         </nav>
         <div class="sidebar-footer">
           <button class="sidebar-profile-btn" onclick="openProfileModal()">
@@ -85,19 +108,53 @@ function render() {
               <div class="sidebar-user-name">${esc(user.name || 'User')}</div>
               <div class="sidebar-user-label">${esc(user.email || '')}</div>
             </div>
-            <span class="sidebar-profile-icon">⚙</span>
+            <span class="sidebar-profile-icon">${NAV_ICONS.profile}</span>
           </button>
-          <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:0.6rem" onclick="handleLogout()">Logout</button>
-        </div>
-        <div class="sync-status">
-          <div class="sync-dot ${state.syncing ? 'syncing' : ''}"></div>
-          <span>${state.syncing ? 'Syncing…' : 'Live'}</span>
+          <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:0.5rem" onclick="handleLogout()">Logout</button>
+          <div class="sync-status">
+            <div class="sync-dot ${state.syncing ? 'syncing' : ''}"></div>
+            <span>${state.syncing ? 'Syncing…' : 'Online'}</span>
+          </div>
         </div>
       </div>
+
+      <!-- ── MAIN CONTENT ─── -->
       <div class="main-content">
+        <!-- Mobile top bar -->
+        <div class="mobile-topbar">
+          <div class="logo" style="margin-bottom:0">
+            <div class="logo-icon" style="width:26px;height:26px;font-size:0.8rem">▣</div>
+            <div class="logo-text" style="font-size:1.05rem">Trade<span>Vault</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <div class="sync-dot ${state.syncing ? 'syncing' : ''}" style="width:8px;height:8px"></div>
+            <button class="mobile-avatar" onclick="openProfileModal()">${esc((user.name||'U').charAt(0).toUpperCase())}</button>
+          </div>
+        </div>
+
         ${state.loading ? skeleton() : renderView(stats)}
       </div>
-      ${state.showTradeModal ? tradeModal() : ''}
+
+      <!-- ── MOBILE BOTTOM NAV ─── -->
+      <nav class="bottom-nav">
+        <button class="bottom-nav-item ${state.currentView === 'dashboard' ? 'active' : ''}" onclick="changeView('dashboard')">
+          ${NAV_ICONS.dashboard}<span>Home</span>
+        </button>
+        <button class="bottom-nav-item ${state.currentView === 'trades' ? 'active' : ''}" onclick="changeView('trades')">
+          ${NAV_ICONS.trades}<span>Trades</span>
+        </button>
+        <button class="bottom-nav-fab" onclick="openAddTradeModal()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="bottom-nav-item ${state.currentView === 'analytics' ? 'active' : ''}" onclick="changeView('analytics')">
+          ${NAV_ICONS.analytics}<span>Stats</span>
+        </button>
+        <button class="bottom-nav-item ${state.currentView === 'journal' ? 'active' : ''}" onclick="changeView('journal')">
+          ${NAV_ICONS.journal}<span>Journal</span>
+        </button>
+      </nav>
+
+      ${state.showTradeModal   ? tradeModal()   : ''}
       ${state.showProfileModal ? profileModal() : ''}
     </div>
   `;
@@ -128,11 +185,11 @@ function skeleton() {
 }
 
 function statCard(label, value, sub, positive = null) {
-  const color = positive === true ? 'var(--accent-green)' : positive === false ? 'var(--accent-red)' : 'inherit';
+  const colorClass = positive === true ? 'positive' : positive === false ? 'negative' : '';
   return `
     <div class="stat-card">
       <div class="stat-label">${label}</div>
-      <div class="stat-value" style="color:${color}">${value}</div>
+      <div class="stat-value ${colorClass}">${value}</div>
       <div class="stat-change">${sub}</div>
     </div>`;
 }
@@ -151,7 +208,7 @@ function dashboard(s) {
   return `
     <div class="page-header">
       <h1 class="header">Dashboard</h1>
-      <button class="btn btn-primary" onclick="openAddTradeModal()">+ Add Trade</button>
+      <button class="btn btn-primary hide-mobile" onclick="openAddTradeModal()">+ Add Trade</button>
     </div>
     <div class="stats-grid">
       ${statCard('Total P&L', `${s.totalPnL >= 0 ? '+' : ''}$${s.totalPnL.toFixed(2)}`, `${s.winningTrades}W / ${s.losingTrades}L`, s.totalPnL >= 0)}
@@ -178,20 +235,20 @@ function tradesView() {
   return `
     <div class="page-header">
       <h1 class="header">Trade History</h1>
-      <button class="btn btn-primary" onclick="openAddTradeModal()">+ Add Trade</button>
+      <button class="btn btn-primary hide-mobile" onclick="openAddTradeModal()">+ Add Trade</button>
     </div>
     <div class="filter-bar">
-      <select class="form-select filter-select" onchange="updateFilter('assetType', this.value)">
-        <option value="all">All Asset Types</option>
+      <div class="filter-chips">
+        <button class="filter-chip ${state.filterAssetType === 'all'     ? 'active' : ''}" onclick="updateFilter('assetType','all')">All</button>
         ${['stock','forex','crypto','futures','options'].map(v =>
-          `<option value="${v}" ${state.filterAssetType === v ? 'selected' : ''}>${v.charAt(0).toUpperCase() + v.slice(1)}</option>`
+          `<button class="filter-chip ${state.filterAssetType === v ? 'active' : ''}" onclick="updateFilter('assetType','${v}')">${v.charAt(0).toUpperCase()+v.slice(1)}</button>`
         ).join('')}
-      </select>
-      <select class="form-select filter-select" onchange="updateFilter('direction', this.value)">
-        <option value="all">All Directions</option>
-        <option value="long"  ${state.filterDirection === 'long'  ? 'selected' : ''}>Long</option>
-        <option value="short" ${state.filterDirection === 'short' ? 'selected' : ''}>Short</option>
-      </select>
+      </div>
+      <div class="filter-chips">
+        <button class="filter-chip ${state.filterDirection === 'all'   ? 'active' : ''}" onclick="updateFilter('direction','all')">Both</button>
+        <button class="filter-chip ${state.filterDirection === 'long'  ? 'active' : ''}" onclick="updateFilter('direction','long')">Long</button>
+        <button class="filter-chip ${state.filterDirection === 'short' ? 'active' : ''}" onclick="updateFilter('direction','short')">Short</button>
+      </div>
       <span class="filter-count">${filtered.length} trade${filtered.length !== 1 ? 's' : ''}</span>
     </div>
     <div class="card">
@@ -221,7 +278,7 @@ function tradeCard(t, showDelete = false) {
           </span>
         </div>
         <div class="trade-right">
-          <span class="trade-pnl" style="color:${pnlColor}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</span>
+          <span class="trade-pnl ${pnl >= 0 ? 'positive' : 'negative'}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</span>
           ${showDelete
             ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();doDeleteTrade('${esc(t.id)}')">✕</button>`
             : ''}
@@ -270,9 +327,7 @@ function analytics(s) {
             <div class="trade-item" style="cursor:default">
               <div class="trade-header">
                 <span class="trade-symbol">${esc(k)}</span>
-                <span class="trade-pnl" style="color:${d.pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
-                  ${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}
-                </span>
+                <span class="trade-pnl ${d.pnl >= 0 ? 'positive' : 'negative'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</span>
               </div>
               <div class="trade-meta">
                 <span class="trade-meta-item">📊 ${d.count} trades</span>
@@ -343,7 +398,7 @@ function calendar() {
         ${hasJournal[day] ? '<div class="calendar-day-journal">📝</div>' : ''}
         <div class="calendar-day-number">${day}</div>
         ${ts.length ? `
-          <div class="calendar-day-pnl" style="color:${pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+          <div class="calendar-day-pnl ${pnl >= 0 ? 'positive' : 'negative'}">
             ${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(0)}
           </div>
           <div class="calendar-day-trades">${ts.length}t</div>` : ''}
@@ -439,7 +494,7 @@ function journal() {
             const color = pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
             return `
               <div class="journal-entry" style="border-left-color:${color}">
-                <div class="journal-date" style="color:${color}">
+                <div class="journal-date ${pnl >= 0 ? 'positive' : 'negative'}">
                   ${esc(t.symbol)} · ${t.exit_date ? new Date(t.exit_date).toLocaleDateString() : '—'}
                   <span style="margin-left:1rem">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</span>
                 </div>
@@ -1035,7 +1090,7 @@ function profileModal() {
             <div class="profile-stat-label">Journal Entries</div>
           </div>
           <div class="profile-stat">
-            <div class="profile-stat-value" style="color:${calcStats(state.trades).totalPnL >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+            <div class="profile-stat-value ${calcStats(state.trades).totalPnL >= 0 ? 'positive' : 'negative'}">
               ${calcStats(state.trades).totalPnL >= 0 ? '+' : ''}$${calcStats(state.trades).totalPnL.toFixed(0)}
             </div>
             <div class="profile-stat-label">Total P&L</div>
