@@ -1,8 +1,8 @@
 {
   "rewrites": [
-    { "source": "/",      "destination": "/landing.html" },
+    { "source": "/",      "destination": "/index.html"   },
     { "source": "/login", "destination": "/auth.html"    },
-    { "source": "/app",   "destination": "/index.html"   }
+    { "source": "/app",   "destination": "/app.html"     }
   ],
   "headers": [
     {

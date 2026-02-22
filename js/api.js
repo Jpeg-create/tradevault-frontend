@@ -4,6 +4,7 @@ function getToken()  { return localStorage.getItem('tv_token'); }
 function getUser()   { return JSON.parse(localStorage.getItem('tv_user') || 'null'); }
 function saveAuth(token, user) { localStorage.setItem('tv_token', token); localStorage.setItem('tv_user', JSON.stringify(user)); }
 function clearAuth() { localStorage.removeItem('tv_token'); localStorage.removeItem('tv_user'); }
+function redirectToLogin() { window.location.href = '/login'; }
 
 // Fetch with a timeout — Render free tier can take 30-60s to cold start
 async function request(method, path, body = null, timeoutMs = 35000) {
@@ -21,13 +22,18 @@ async function request(method, path, body = null, timeoutMs = 35000) {
     if (token) opts.headers['Authorization'] = `Bearer ${token}`;
     if (body)  opts.body = JSON.stringify(body);
 
-    const res  = await fetch(`${CONFIG.API_BASE}${path}`, opts);
-    const json = await res.json();
+    const res = await fetch(`${CONFIG.API_BASE}${path}`, opts);
+    let json = null;
+    try {
+      json = await res.json();
+    } catch {
+      json = { success: false, error: `HTTP ${res.status}` };
+    }
 
     if (res.status === 401) {
       clearAuth();
-      window.location.href = '/login';
-      return;
+      redirectToLogin();
+      throw new Error('Session expired. Please log in again.');
     }
 
     if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
@@ -67,11 +73,27 @@ const api = {
   // Import
   previewCSV: (fd) => {
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), 35000);
+    const timer = setTimeout(() => controller.abort(), 35000);
     return fetch(`${CONFIG.API_BASE}/import/preview`, {
       method: 'POST', body: fd, credentials: 'include', signal: controller.signal,
       headers: { Authorization: `Bearer ${getToken()}` }
-    }).then(r => r.json()).then(j => { if (!j.success) throw new Error(j.error); return j; });
+    }).then(async (r) => {
+      let j = null;
+      try {
+        j = await r.json();
+      } catch {
+        j = { success: false, error: `HTTP ${r.status}` };
+      }
+
+      if (r.status === 401) {
+        clearAuth();
+        redirectToLogin();
+        throw new Error('Session expired. Please log in again.');
+      }
+
+      if (!r.ok || !j.success) throw new Error(j.error || `HTTP ${r.status}`);
+      return j;
+    }).finally(() => clearTimeout(timer));
   },
   confirmImport:  (rows) => request('POST', '/import/confirm', { rows }),
   getSampleCSVUrl: ()   => `${CONFIG.API_BASE}/import/sample`,
