@@ -303,7 +303,7 @@ function dashboard(s) {
     <div class="card">
       <div class="card-title">Recent Trades</div>
       ${state.trades.length === 0
-        ? empty('📊', 'No trades yet', 'Click "+ Add Trade" to log your first trade')
+        ? empty('📊', 'No trades yet', 'Tap the + button or click "Add Trade" to log your first trade')
         : state.trades.slice(0, 5).map(t => tradeCard(t, false)).join('')}
     </div>`;
 }
@@ -910,7 +910,7 @@ function tradeModal() {
             </div>
           </div>
           <div class="modal-actions">
-            <button class="btn btn-danger" onclick="doDeleteTrade('${esc(d.id)}');closeTradeModal()">Delete Trade</button>
+            <button class="btn btn-danger" onclick="doDeleteTrade('${esc(d.id)}')">Delete Trade</button>
             <button class="btn btn-secondary" onclick="closeTradeModal()">Close</button>
           </div>` : `
           <div class="modal-actions">
@@ -979,8 +979,10 @@ async function doUpdateTrade(id) {
   const ep  = parseFloat(document.getElementById('t-ep').value);
   const xp  = parseFloat(document.getElementById('t-xp').value);
   const qty = parseFloat(document.getElementById('t-qty').value);
-  if (!sym || isNaN(ep) || isNaN(xp) || isNaN(qty)) {
-    toast('Symbol, entry price, exit price and quantity are required', 'error');
+  if (!sym || isNaN(ep) || isNaN(xp) || isNaN(qty) || qty <= 0) {
+    toast(!sym || isNaN(ep) || isNaN(xp) || isNaN(qty)
+      ? 'Symbol, entry price, exit price and quantity are required'
+      : 'Quantity must be greater than zero', 'error');
     if (btn) { btn.disabled = false; btn.textContent = 'Update Trade'; }
     return;
   }
@@ -1043,8 +1045,10 @@ async function doSaveTrade() {
   const xp   = parseFloat(document.getElementById('t-xp').value);
   const qty  = parseFloat(document.getElementById('t-qty').value);
 
-  if (!sym || isNaN(ep) || isNaN(xp) || isNaN(qty)) {
-    toast('Symbol, entry price, exit price and quantity are required', 'error');
+  if (!sym || isNaN(ep) || isNaN(xp) || isNaN(qty) || qty <= 0) {
+    toast(!sym || isNaN(ep) || isNaN(xp) || isNaN(qty)
+      ? 'Symbol, entry price, exit price and quantity are required'
+      : 'Quantity must be greater than zero', 'error');
     if (btn) { btn.disabled = false; btn.textContent = 'Save Trade'; }
     return;
   }
@@ -1085,6 +1089,9 @@ async function doDeleteTrade(id) {
       await api.deleteTrade(id);
       state.trades = state.trades.filter(t => String(t.id) !== String(id));
       state.syncing = false;
+      // Close the trade modal if the deleted trade was being viewed
+      state.showTradeModal = false;
+      state.selectedTrade  = null;
       toast('Trade deleted', 'info');
       render();
     } catch (err) {
@@ -1135,12 +1142,17 @@ function handleDrop(e) {
   e.preventDefault();
   document.getElementById('drop-zone').classList.remove('dragover');
   const f = e.dataTransfer.files[0];
-  if (f && f.name.endsWith('.csv')) uploadCSV(f);
-  else toast('Please drop a .csv file', 'error');
+  if (f && f.name.endsWith('.csv')) {
+    if (f.size > 5 * 1024 * 1024) { toast('CSV file must be smaller than 5 MB', 'error'); return; }
+    uploadCSV(f);
+  } else toast('Please drop a .csv file', 'error');
 }
 
 function handleCSVFile(e) {
-  if (e.target.files[0]) uploadCSV(e.target.files[0]);
+  const f = e.target.files[0];
+  if (!f) return;
+  if (f.size > 5 * 1024 * 1024) { toast('CSV file must be smaller than 5 MB', 'error'); e.target.value = ''; return; }
+  uploadCSV(f);
 }
 
 async function uploadCSV(file) {
