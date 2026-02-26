@@ -16,6 +16,10 @@ let state = {
   showTradeModal: false, selectedTrade: null,
   showProfileModal: false,
   csvParsed: null, csvImporting: false, csvProgress: 0,
+  // ── AI ──
+  aiDebrief:  { loading: false, text: '', error: null, tradeId: null },
+  aiPatterns: { loading: false, text: '', error: null, ran: false },
+  showUpgradeModal: false,
 };
 
 // ── TOAST ─────────────────────────────────────────────────
@@ -109,12 +113,85 @@ function showPrompt(message, onConfirm, placeholder = '') {
   input.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); });
 }
 
-// ── BOOT ──────────────────────────────────────────────────
+// ── PREMIUM HELPERS ───────────────────────────────────────
+function isPremium() {
+  return getUser()?.plan === 'premium';
+}
+
+function showUpgradeModal() {
+  state.showUpgradeModal = true;
+  render();
+}
+
+function closeUpgradeModal() {
+  state.showUpgradeModal = false;
+  render();
+}
+
+function upgradeModal() {
+  return `
+    <div class="modal" onclick="closeUpgradeModal()">
+      <div class="modal-content upgrade-modal-content" onclick="event.stopPropagation()">
+        <div class="upgrade-modal-header">
+          <div class="upgrade-crown">👑</div>
+          <h2 class="modal-title" style="margin-top:0.75rem">Quantara Premium</h2>
+          <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:0.35rem">Unlock AI-powered insights for your trading</p>
+        </div>
+        <div class="upgrade-features">
+          <div class="upgrade-feature">
+            <span class="upgrade-feature-icon">✨</span>
+            <div>
+              <div class="upgrade-feature-title">AI Trade Debrief</div>
+              <div class="upgrade-feature-desc">Get a personalised coaching note after every trade, referencing your own stats</div>
+            </div>
+          </div>
+          <div class="upgrade-feature">
+            <span class="upgrade-feature-icon">📊</span>
+            <div>
+              <div class="upgrade-feature-title">Pattern Recognition</div>
+              <div class="upgrade-feature-desc">AI scans all your trades and surfaces hidden strengths and weaknesses</div>
+            </div>
+          </div>
+          <div class="upgrade-feature">
+            <span class="upgrade-feature-icon">📝</span>
+            <div>
+              <div class="upgrade-feature-title">AI Journal Assistant</div>
+              <div class="upgrade-feature-desc">Draft your daily journal entry from your trades in one click</div>
+            </div>
+          </div>
+        </div>
+        <div class="upgrade-price">
+          <span class="upgrade-price-amount">$9.99</span>
+          <span class="upgrade-price-period">/month</span>
+        </div>
+        <div style="text-align:center;color:var(--text-secondary);font-size:0.78rem;margin-bottom:1.25rem">
+          Payments coming soon — join the waitlist to be notified
+        </div>
+        <button class="btn btn-primary btn-block" onclick="toast('You\'re on the waitlist! We\'ll notify you when Premium launches.','success',5000);closeUpgradeModal()">
+          Join Waitlist
+        </button>
+        <button class="btn btn-secondary btn-block" style="margin-top:0.6rem" onclick="closeUpgradeModal()">Maybe Later</button>
+      </div>
+    </div>`;
+}
+
+// ── AI LOCKED BUTTON ──────────────────────────────────────
+function aiLockedBtn(label) {
+  return `<button class="btn btn-ai-locked btn-sm" onclick="showUpgradeModal()">
+    <span class="crown-icon">👑</span> ${label}
+  </button>`;
+}
 async function init() {
   state.loading = true; render();
   try {
-    const [t, j, b] = await Promise.all([api.getTrades(), api.getJournal(), api.getBrokers()]);
-    state.trades = t.data; state.journalEntries = j.data; state.brokers = b.data;
+    // Use allSettled so a single failing endpoint doesn't blank out the entire app
+    const [t, j, b] = await Promise.allSettled([api.getTrades(), api.getJournal(), api.getBrokers()]);
+    if (t.status === 'fulfilled') state.trades         = t.value.data;
+    if (j.status === 'fulfilled') state.journalEntries = j.value.data;
+    if (b.status === 'fulfilled') state.brokers        = b.value.data;
+    if (t.status === 'rejected' && j.status === 'rejected' && b.status === 'rejected') {
+      toast('Could not reach server. Check your connection.', 'error', 7000);
+    }
   } catch (err) {
     toast('Could not reach server. Check your connection.', 'error', 7000);
   }
@@ -168,7 +245,7 @@ function render() {
       <div class="sidebar">
         <div class="logo">
           <div class="logo-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vg)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vg)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vg)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vg)"/><circle cx="16" cy="27" r="1.5" fill="url(#vg)"/><circle cx="5" cy="16" r="1.5" fill="url(#vg)"/><circle cx="27" cy="16" r="1.5" fill="url(#vg)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><line x1="10" y1="18" x2="10" y2="19" stroke="#00d4ff" stroke-width="1"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><line x1="14" y1="12" x2="14" y2="14" stroke="#a3e635" stroke-width="1"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><line x1="18" y1="14" x2="18" y2="16" stroke="#00d4ff" stroke-width="1"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><line x1="22" y1="10" x2="22" y2="12" stroke="#a3e635" stroke-width="1"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
-          <div class="logo-text">Trade<span>Vault</span></div>
+          <div class="logo-text">Quan<span>tara</span></div>
         </div>
         <nav style="flex:1">
           <div class="nav-section-label">OVERVIEW</div>
@@ -205,7 +282,7 @@ function render() {
         <div class="mobile-topbar">
           <div class="logo" style="margin-bottom:0">
             <div class="logo-icon" style="width:26px;height:26px"><svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vgt)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vgt)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vgt)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vgt)"/><circle cx="16" cy="27" r="1.5" fill="url(#vgt)"/><circle cx="5" cy="16" r="1.5" fill="url(#vgt)"/><circle cx="27" cy="16" r="1.5" fill="url(#vgt)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
-            <div class="logo-text" style="font-size:1.05rem">Trade<span>Vault</span></div>
+            <div class="logo-text" style="font-size:1.05rem">Quan<span>tara</span></div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem">
             <div class="sync-dot ${state.syncing ? 'syncing' : ''}" style="width:8px;height:8px"></div>
@@ -238,6 +315,7 @@ function render() {
 
       ${state.showTradeModal   ? tradeModal()   : ''}
       ${state.showProfileModal ? profileModal() : ''}
+      ${state.showUpgradeModal ? upgradeModal() : ''}
     </div>
   `;
 }
@@ -401,6 +479,36 @@ function analytics(s) {
       ${statCard('Profit Factor', s.profitFactor, '')}
       ${statCard('Total P&L', `${s.totalPnL >= 0 ? '+' : ''}$${s.totalPnL.toFixed(2)}`, '', s.totalPnL >= 0)}
     </div>
+
+    <!-- ── AI INSIGHTS ── -->
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>✨ AI Pattern Insights</span>
+        ${isPremium()
+          ? `<button class="btn btn-ai btn-sm" id="ai-patterns-btn" onclick="doAIPatterns()">
+               ${state.aiPatterns.loading
+                 ? '<span class="spinner"></span> Analysing…'
+                 : state.aiPatterns.ran ? '↺ Re-analyse' : 'Analyse My Trades'}
+             </button>`
+          : aiLockedBtn('Analyse My Trades')}
+      </div>
+      ${state.aiPatterns.text
+        ? `<div class="ai-patterns-output" id="ai-patterns-text">${esc(state.aiPatterns.text).replace(/\n/g,'<br>')}</div>`
+        : state.aiPatterns.loading
+          ? `<div class="ai-patterns-output" id="ai-patterns-text"><span class="ai-cursor"></span></div>`
+          : `<div class="ai-patterns-placeholder">
+               ${isPremium()
+                 ? `<div style="text-align:center;padding:2rem 1rem;color:var(--text-secondary)">
+                      <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.4">📊</div>
+                      <div style="font-size:0.85rem">Click "Analyse My Trades" to find hidden patterns in your data</div>
+                    </div>`
+                 : `<div style="text-align:center;padding:2rem 1rem;color:var(--text-secondary)">
+                      <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.4">👑</div>
+                      <div style="font-size:0.85rem">Upgrade to Premium to unlock AI pattern recognition</div>
+                    </div>`}
+             </div>`
+      }
+    </div>
     <div class="card">
       <div class="card-title">Performance by Strategy</div>
       ${!Object.keys(byStrategy).length
@@ -549,7 +657,12 @@ function journal() {
         <label class="form-label">Entry</label>
         <textarea class="form-textarea" id="jcontent" placeholder="What did you learn today? How did you execute? How did you feel?" style="min-height:140px"></textarea>
       </div>
-      <button class="btn btn-primary" id="jsave" onclick="doSaveJournal()">Save Entry</button>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" id="jsave" onclick="doSaveJournal()">Save Entry</button>
+        ${isPremium()
+          ? `<button class="btn btn-ai btn-sm" id="ai-draft-btn" onclick="doAIJournalDraft()">✨ Draft from Today's Trades</button>`
+          : aiLockedBtn("Draft from Today's Trades")}
+      </div>
     </div>
     <div class="card">
       <div class="card-title">
@@ -724,7 +837,7 @@ function brokers() {
     <div class="card">
       <div class="card-title">How It Works</div>
       <p style="color:var(--text-secondary);font-size:0.875rem;line-height:1.75">
-        Connect a broker, click Sync, and TradeVault fetches your completed trades automatically via the broker's API.
+        Connect a broker, click Sync, and Quantara fetches your completed trades automatically via the broker's API.
         Duplicates are skipped — sync as often as you like. Your API keys are stored securely on the server, never in the browser.
         For brokers without an API, export a CSV and use the Import tab.
       </p>
@@ -909,6 +1022,29 @@ function tradeModal() {
               ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}
             </div>
           </div>
+
+          <!-- ── AI DEBRIEF ── -->
+          <div class="ai-debrief-section">
+            <div class="ai-debrief-label">✨ AI Trade Debrief</div>
+            ${isPremium() ? `
+              <button class="btn btn-ai btn-sm" id="ai-debrief-btn"
+                onclick="doAIDebrief('${esc(d.id)}')">
+                ${state.aiDebrief.tradeId === d.id && state.aiDebrief.loading
+                  ? '<span class="spinner"></span> Analysing…'
+                  : state.aiDebrief.tradeId === d.id && state.aiDebrief.text
+                    ? '↺ New Debrief'
+                    : '✨ Get AI Debrief'}
+              </button>
+              ${state.aiDebrief.tradeId === d.id && (state.aiDebrief.text || state.aiDebrief.loading)
+                ? `<div class="ai-debrief-card" id="ai-debrief-container">
+                    <div class="ai-debrief-text" id="ai-debrief-text">${esc(state.aiDebrief.text)}</div>
+                    ${state.aiDebrief.loading ? '<span class="ai-cursor"></span>' : ''}
+                   </div>`
+                : '<div class="ai-debrief-card" id="ai-debrief-container" style="display:none"><div class="ai-debrief-text" id="ai-debrief-text"></div></div>'
+              }
+            ` : aiLockedBtn('Get AI Debrief')}
+          </div>
+
           <div class="modal-actions">
             <button class="btn btn-danger" onclick="doDeleteTrade('${esc(d.id)}')">Delete Trade</button>
             <button class="btn btn-secondary" onclick="closeTradeModal()">Close</button>
@@ -931,8 +1067,8 @@ function changeView(v) {
   if (mc) mc.scrollTop = 0;
   window.scrollTo(0, 0);
 }
-function openAddTradeModal()    { state.selectedTrade = null; state.showTradeModal = true; render(); }
-function closeTradeModal()      { state.showTradeModal = false; state.selectedTrade = null; render(); }
+function openAddTradeModal()    { state.selectedTrade = null; state._editingTrade = null; state.showTradeModal = true; render(); }
+function closeTradeModal()      { state.showTradeModal = false; state.selectedTrade = null; state._editingTrade = null; render(); }
 function updateFilter(type, val){ type === 'assetType' ? state.filterAssetType = val : state.filterDirection = val; render(); }
 function changeCalendarMonth(d) { const dt = new Date(state.calendarDate); dt.setMonth(dt.getMonth() + d); state.calendarDate = dt; render(); }
 
@@ -1026,13 +1162,47 @@ function viewCalendarDay(ds) {
     t.exit_date && new Date(t.exit_date).toDateString() === date.toDateString()
   );
   if (!dayTrades.length) return;
+
   const totalPnL = dayTrades.reduce((s, t) => s + Number(t.pnl), 0);
-  const summary  = dayTrades.map(t => `${t.symbol}: ${Number(t.pnl) >= 0 ? '+' : ''}$${Number(t.pnl).toFixed(2)}`).join('  |  ');
-  toast(
-    `${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})} — ${dayTrades.length} trade${dayTrades.length !== 1 ? 's' : ''} — P&L: ${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}  |  ${summary}`,
-    totalPnL >= 0 ? 'success' : 'error',
-    6000
-  );
+  const dateLabel = date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+  // Show a lightweight inline modal with trade list
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-box" style="max-width:440px;width:92vw">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div>
+          <div style="font-weight:700;font-size:1rem">${dateLabel}</div>
+          <div style="font-size:0.82rem;color:var(--text-secondary)">${dayTrades.length} trade${dayTrades.length !== 1 ? 's' : ''}</div>
+        </div>
+        <span class="${totalPnL >= 0 ? 'positive' : 'negative'}" style="font-size:1.15rem;font-weight:800">
+          ${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}
+        </span>
+      </div>
+      <div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem">
+        ${dayTrades.map(t => {
+          const pnl = Number(t.pnl);
+          return `<div style="background:var(--bg-secondary);border-radius:8px;padding:0.6rem 0.75rem;cursor:pointer"
+            onclick="this.closest('.confirm-overlay').remove();viewTrade('${esc(t.id)}')">
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-weight:700">${esc(t.symbol)}</span>
+              <span class="${pnl >= 0 ? 'positive' : 'negative'}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:2px">
+              ${t.direction} · ${t.asset_type}${t.strategy ? ' · ' + esc(t.strategy) : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="confirm-actions" style="margin-top:1rem">
+        <button class="btn btn-secondary btn-sm confirm-cancel">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.confirm-cancel').onclick = () => overlay.remove();
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.remove(); });
 }
 
 // ── TRADE ACTIONS ─────────────────────────────────────────
@@ -1389,7 +1559,7 @@ function doExportData() {
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `tradevault-export-${new Date().toISOString().split('T')[0]}.csv`;
+  a.href = url; a.download = `quantara-export-${new Date().toISOString().split('T')[0]}.csv`;
   a.click(); URL.revokeObjectURL(url);
   toast('Export downloaded!', 'success');
 }
@@ -1414,9 +1584,126 @@ async function doDeleteAccount() {
   );
 }
 
+// ── AI ACTIONS ────────────────────────────────────────────
+function doAIDebrief(tradeId) {
+  // Look up trade from state by ID — never deserialise user data from onclick attributes
+  const trade = state.trades.find(t => String(t.id) === String(tradeId)) || state.selectedTrade;
+  if (!trade) { toast('Trade not found', 'error'); return; }
+  if (!isPremium()) { showUpgradeModal(); return; }
+
+  state.aiDebrief = { loading: true, text: '', error: null, tradeId: trade.id };
+
+  // Update button and container directly — no full re-render during streaming
+  const btn       = document.getElementById('ai-debrief-btn');
+  const container = document.getElementById('ai-debrief-container');
+  const textEl    = document.getElementById('ai-debrief-text');
+
+  if (btn)       { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Analysing…'; }
+  if (container) { container.style.display = 'block'; }
+  if (textEl)    { textEl.textContent = ''; }
+
+  // Add blinking cursor
+  if (container) {
+    let cursor = container.querySelector('.ai-cursor');
+    if (!cursor) { cursor = document.createElement('span'); cursor.className = 'ai-cursor'; container.appendChild(cursor); }
+  }
+
+  streamAI('/ai/debrief', { trade },
+    (chunk) => {
+      state.aiDebrief.text += chunk;
+      if (textEl) textEl.textContent = state.aiDebrief.text;
+    },
+    () => {
+      state.aiDebrief.loading = false;
+      container?.querySelector('.ai-cursor')?.remove();
+      if (btn) { btn.disabled = false; btn.innerHTML = '↺ New Debrief'; }
+    },
+    (err) => {
+      state.aiDebrief.loading = false;
+      container?.querySelector('.ai-cursor')?.remove();
+      if (err === 'upgrade') { showUpgradeModal(); return; }
+      if (textEl) textEl.textContent = '⚠️ ' + err;
+      if (btn) { btn.disabled = false; btn.innerHTML = '✨ Get AI Debrief'; }
+    }
+  );
+}
+
+function doAIPatterns() {
+  if (!isPremium()) { showUpgradeModal(); return; }
+
+  state.aiPatterns = { loading: true, text: '', error: null, ran: true };
+
+  const btn    = document.getElementById('ai-patterns-btn');
+  const textEl = document.getElementById('ai-patterns-text');
+
+  if (btn)    { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Analysing…'; }
+  if (textEl) { textEl.innerHTML = '<span class="ai-cursor"></span>'; }
+
+  let accumulated = '';
+
+  streamAI('/ai/patterns', {},
+    (chunk) => {
+      accumulated += chunk;
+      state.aiPatterns.text = accumulated;
+      if (textEl) {
+        textEl.innerHTML = esc(accumulated).replace(/\n/g, '<br>') + '<span class="ai-cursor"></span>';
+      }
+    },
+    () => {
+      state.aiPatterns.loading = false;
+      if (textEl) textEl.innerHTML = esc(accumulated).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g,'<br>');
+      if (btn)    { btn.disabled = false; btn.innerHTML = '↺ Re-analyse'; }
+    },
+    (err) => {
+      state.aiPatterns.loading = false;
+      state.aiPatterns.text = '';
+      if (err === 'upgrade') { showUpgradeModal(); return; }
+      toast(err, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = 'Analyse My Trades'; }
+    }
+  );
+}
+
+function doAIJournalDraft() {
+  if (!isPremium()) { showUpgradeModal(); return; }
+
+  const btn     = document.getElementById('ai-draft-btn');
+  const textarea = document.getElementById('jcontent');
+
+  if (!textarea) return;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Drafting…'; }
+
+  const existingText = textarea.value.trim();
+  textarea.value = '';
+  textarea.placeholder = 'AI is writing your draft…';
+
+  let accumulated = '';
+
+  streamAI('/ai/journal-draft', { existingText },
+    (chunk) => {
+      accumulated += chunk;
+      textarea.value = accumulated;
+      // Auto-scroll textarea to bottom
+      textarea.scrollTop = textarea.scrollHeight;
+    },
+    () => {
+      textarea.placeholder = 'What did you learn today? How did you execute? How did you feel?';
+      if (btn) { btn.disabled = false; btn.innerHTML = '✨ Draft from Today\'s Trades'; }
+      toast('Draft ready — edit it and save!', 'success');
+    },
+    (err) => {
+      textarea.value = existingText;
+      textarea.placeholder = 'What did you learn today? How did you execute? How did you feel?';
+      if (err === 'upgrade') { showUpgradeModal(); return; }
+      toast(err, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '✨ Draft from Today\'s Trades'; }
+    }
+  );
+}
+
 // ── AUTH ──────────────────────────────────────────────────
 function handleLogout() {
-  showConfirm('Log out of TradeVault?', () => {
+  showConfirm('Log out of Quantara?', () => {
     clearAuth();
     window.location.href = '/login';
   }, { confirmLabel: 'Log out', confirmClass: 'btn-secondary' });

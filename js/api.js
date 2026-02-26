@@ -113,6 +113,62 @@ const api = {
   },
 };
 
+// ── AI STREAMING ──────────────────────────────────────────
+// Calls a premium AI endpoint and streams back text word-by-word.
+// onChunk(text) — called for each streamed token
+// onDone()      — called when stream ends successfully
+// onError(msg)  — called on error; msg === 'upgrade' means not premium
+async function streamAI(endpoint, body, onChunk, onDone, onError) {
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      let err = { error: `HTTP ${res.status}` };
+      try { err = await res.json(); } catch {}
+      if (res.status === 401) { clearAuth(); redirectToLogin(); return; }
+      if (res.status === 403 && err.upgrade) { onError('upgrade'); return; }
+      onError(err.error || 'AI request failed');
+      return;
+    }
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let   buffer  = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') { onDone(); return; }
+        try {
+          const json = JSON.parse(raw);
+          if (json.text)  onChunk(json.text);
+          if (json.error) { onError(json.error); return; }
+        } catch {}
+      }
+    }
+    onDone();
+  } catch (err) {
+    onError(err.message);
+  }
+}
+
+window.streamAI = streamAI;
+
 window.api = api;
 window.getToken = getToken;
 window.getUser  = getUser;
