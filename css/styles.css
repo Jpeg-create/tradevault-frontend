@@ -68,21 +68,23 @@ body {
 
 .logo {
   font-family:'Syne',sans-serif;
-  font-size:1.25rem;
+  font-size:1rem;
   font-weight:800;
-  padding:0 0.5rem;
-  margin-bottom:2rem;
+  padding:0 0.4rem;
+  margin-bottom:1.5rem;
   display:flex;
   align-items:center;
-  gap:0.6rem;
-  letter-spacing:0.5px;
+  gap:0.45rem;
+  letter-spacing:0.2px;
+  overflow:hidden;
+  white-space:nowrap;
 }
 .logo-icon {
-  width:32px; height:32px;
+  width:24px; height:24px;
   display:flex; align-items:center; justify-content:center;
   flex-shrink:0;
 }
-.logo-text { color:var(--text-primary); }
+.logo-text { color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; }
 .logo-text span { color:var(--accent-green); }
 
 /* Sidebar section labels */

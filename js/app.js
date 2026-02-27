@@ -134,7 +134,7 @@ function upgradeModal() {
       <div class="modal-content upgrade-modal-content" onclick="event.stopPropagation()">
         <div class="upgrade-modal-header">
           <div class="upgrade-crown">👑</div>
-          <h2 class="modal-title" style="margin-top:0.75rem">Quantara Premium</h2>
+          <h2 class="modal-title" style="margin-top:0.75rem">Quantario Premium</h2>
           <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:0.35rem">Unlock AI-powered insights for your trading</p>
         </div>
         <div class="upgrade-features">
@@ -244,8 +244,8 @@ function render() {
       <!-- ── DESKTOP SIDEBAR ─── -->
       <div class="sidebar">
         <div class="logo">
-          <div class="logo-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vg)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vg)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vg)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vg)"/><circle cx="16" cy="27" r="1.5" fill="url(#vg)"/><circle cx="5" cy="16" r="1.5" fill="url(#vg)"/><circle cx="27" cy="16" r="1.5" fill="url(#vg)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><line x1="10" y1="18" x2="10" y2="19" stroke="#00d4ff" stroke-width="1"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><line x1="14" y1="12" x2="14" y2="14" stroke="#a3e635" stroke-width="1"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><line x1="18" y1="14" x2="18" y2="16" stroke="#00d4ff" stroke-width="1"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><line x1="22" y1="10" x2="22" y2="12" stroke="#a3e635" stroke-width="1"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
-          <div class="logo-text">Quan<span>tara</span></div>
+          <div class="logo-icon"><svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vg)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vg)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vg)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vg)"/><circle cx="16" cy="27" r="1.5" fill="url(#vg)"/><circle cx="5" cy="16" r="1.5" fill="url(#vg)"/><circle cx="27" cy="16" r="1.5" fill="url(#vg)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><line x1="10" y1="18" x2="10" y2="19" stroke="#00d4ff" stroke-width="1"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><line x1="14" y1="12" x2="14" y2="14" stroke="#a3e635" stroke-width="1"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><line x1="18" y1="14" x2="18" y2="16" stroke="#00d4ff" stroke-width="1"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><line x1="22" y1="10" x2="22" y2="12" stroke="#a3e635" stroke-width="1"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+          <div class="logo-text">Quan<span>tario</span></div>
         </div>
         <nav style="flex:1">
           <div class="nav-section-label">OVERVIEW</div>
@@ -281,8 +281,8 @@ function render() {
         <!-- Mobile top bar -->
         <div class="mobile-topbar">
           <div class="logo" style="margin-bottom:0">
-            <div class="logo-icon" style="width:26px;height:26px"><svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vgt)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vgt)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vgt)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vgt)"/><circle cx="16" cy="27" r="1.5" fill="url(#vgt)"/><circle cx="5" cy="16" r="1.5" fill="url(#vgt)"/><circle cx="27" cy="16" r="1.5" fill="url(#vgt)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
-            <div class="logo-text" style="font-size:1.05rem">Quan<span>tara</span></div>
+            <div class="logo-icon" style="width:22px;height:22px"><svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vgt)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vgt)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vgt)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vgt)"/><circle cx="16" cy="27" r="1.5" fill="url(#vgt)"/><circle cx="5" cy="16" r="1.5" fill="url(#vgt)"/><circle cx="27" cy="16" r="1.5" fill="url(#vgt)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+            <div class="logo-text" style="font-size:0.9rem">Quan<span>tario</span></div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem">
             <div class="sync-dot ${state.syncing ? 'syncing' : ''}" style="width:8px;height:8px"></div>
@@ -837,7 +837,7 @@ function brokers() {
     <div class="card">
       <div class="card-title">How It Works</div>
       <p style="color:var(--text-secondary);font-size:0.875rem;line-height:1.75">
-        Connect a broker, click Sync, and Quantara fetches your completed trades automatically via the broker's API.
+        Connect a broker, click Sync, and Quantario fetches your completed trades automatically via the broker's API.
         Duplicates are skipped — sync as often as you like. Your API keys are stored securely on the server, never in the browser.
         For brokers without an API, export a CSV and use the Import tab.
       </p>
@@ -1559,7 +1559,7 @@ function doExportData() {
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `quantara-export-${new Date().toISOString().split('T')[0]}.csv`;
+  a.href = url; a.download = `quantario-export-${new Date().toISOString().split('T')[0]}.csv`;
   a.click(); URL.revokeObjectURL(url);
   toast('Export downloaded!', 'success');
 }
@@ -1703,7 +1703,7 @@ function doAIJournalDraft() {
 
 // ── AUTH ──────────────────────────────────────────────────
 function handleLogout() {
-  showConfirm('Log out of Quantara?', () => {
+  showConfirm('Log out of Quantario?', () => {
     clearAuth();
     window.location.href = '/login';
   }, { confirmLabel: 'Log out', confirmClass: 'btn-secondary' });
