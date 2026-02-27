@@ -1015,7 +1015,7 @@
   document.querySelectorAll('[href="/login"]').forEach(a => {
     const isLoginBtn = a.classList.contains('btn-ghost') || a.textContent.trim().toLowerCase().startsWith('log');
     a.addEventListener('click', () => {
-      sessionStorage.setItem('qr_tab', isLoginBtn ? 'login' : 'signup');
+      sessionStorage.setItem('tv_tab', isLoginBtn ? 'login' : 'signup');
     });
   });
 </script>

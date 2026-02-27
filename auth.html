@@ -136,9 +136,9 @@
     if (getToken()) window.location.href = '/app';
     // Auto-select tab based on what landing page button was clicked
     (function() {
-      const tab = sessionStorage.getItem('qr_tab');
-      if (tab === 'signup') { sessionStorage.removeItem('qr_tab'); switchTab('signup'); }
-      else if (tab === 'login') { sessionStorage.removeItem('qr_tab'); switchTab('login'); }
+      const tab = sessionStorage.getItem('tv_tab');
+      if (tab === 'signup') { sessionStorage.removeItem('tv_tab'); switchTab('signup'); }
+      else if (tab === 'login') { sessionStorage.removeItem('tv_tab'); switchTab('login'); }
     })();
 
     // Check URL params — ?mode=signup or ?reset=TOKEN
