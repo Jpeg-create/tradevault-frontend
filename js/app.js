@@ -1381,13 +1381,15 @@ async function doSyncBroker(id, name) {
   toast(`Syncing ${name}…`, 'info', 3000);
   try {
     const res = await api.syncBroker(id);
-    if (res.imported > 0) {
+    // Backend returns `imported` (number of new trades inserted)
+    const count = res.imported ?? res.inserted ?? 0;
+    if (count > 0) {
       const fresh = await api.getTrades();
       state.trades = fresh.data;
     }
     const idx = state.brokers.findIndex(b => b.id === id);
     if (idx >= 0) state.brokers[idx].last_sync = new Date().toISOString();
-    toast(`Synced ${res.imported} trade${res.imported !== 1 ? 's' : ''} from ${name}`, 'success');
+    toast(`Synced ${count} new trade${count !== 1 ? 's' : ''} from ${name}`, count > 0 ? 'success' : 'info');
     render();
   } catch (err) {
     toast(`Sync failed: ${err.message}`, 'error');

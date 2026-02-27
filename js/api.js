@@ -1,10 +1,14 @@
 // All API calls — includes auth token in every request + timeout handling
 
-function getToken()  { return localStorage.getItem('tv_token'); }
-function getUser()   { return JSON.parse(localStorage.getItem('tv_user') || 'null'); }
-function saveAuth(token, user) { localStorage.setItem('tv_token', token); localStorage.setItem('tv_user', JSON.stringify(user)); }
-function clearAuth() { localStorage.removeItem('tv_token'); localStorage.removeItem('tv_user'); }
-function redirectToLogin() { window.location.href = '/login'; }
+function getToken()  { return localStorage.getItem('qr_token'); }
+function getUser()   { return JSON.parse(localStorage.getItem('qr_user') || 'null'); }
+function saveAuth(token, user) { localStorage.setItem('qr_token', token); localStorage.setItem('qr_user', JSON.stringify(user)); }
+function clearAuth() { localStorage.removeItem('qr_token'); localStorage.removeItem('qr_user'); }
+function redirectToLogin() {
+  // Don't redirect if we're already on the auth page (prevents redirect loops)
+  if (window.location.pathname === '/login' || window.location.pathname === '/auth.html') return;
+  window.location.href = '/login';
+}
 
 // Fetch with a timeout — Render free tier can take 30-60s to cold start
 async function request(method, path, body = null, timeoutMs = 35000) {

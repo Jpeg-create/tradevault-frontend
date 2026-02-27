@@ -8,12 +8,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    #google-btn-container { display:flex; justify-content:center; min-height:44px; align-items:center; }
+    .google-note { font-size:0.72rem; color:var(--text-secondary); text-align:center; margin-top:0.6rem; line-height:1.5; }
+    .auth-token-box { background:var(--bg-primary); border:1px solid var(--border-color); border-radius:6px; padding:0.75rem; font-size:0.72rem; word-break:break-all; color:var(--accent-green); cursor:pointer; font-family:monospace; margin:0.5rem 0; transition:border-color 0.2s; }
+    .auth-token-box:hover { border-color:var(--accent-green); }
+    .password-strength { display:none; margin-top:0.5rem; align-items:center; gap:0.5rem; }
+    .pw-bar  { flex:1; height:4px; background:var(--bg-tertiary); border-radius:2px; overflow:hidden; }
+    .pw-fill { height:100%; border-radius:2px; transition:width 0.3s, background 0.3s; }
+    .pw-label{ font-size:0.72rem; min-width:48px; font-family:'JetBrains Mono',monospace; }
+  </style>
 </head>
 <body class="auth-page">
   <div class="auth-box">
 
     <div class="auth-header">
-      <div class="auth-logo"><div class="auth-logo-icon"><svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="24" cy="24" r="21" stroke="url(#vgl)" stroke-width="2.5" fill="rgba(0,212,255,0.05)"/><circle cx="24" cy="24" r="15" stroke="url(#vgl)" stroke-width="1.5" fill="rgba(0,212,255,0.04)"/><line x1="3" y1="24" x2="9" y2="24" stroke="url(#vgl)" stroke-width="2.5" stroke-linecap="round"/><circle cx="24" cy="7" r="2" fill="url(#vgl)"/><circle cx="24" cy="41" r="2" fill="url(#vgl)"/><circle cx="7" cy="24" r="2" fill="url(#vgl)"/><circle cx="41" cy="24" r="2" fill="url(#vgl)"/><rect x="13" y="28" width="3" height="6" rx="0.5" fill="#00d4ff"/><line x1="14.5" y1="26" x2="14.5" y2="28" stroke="#00d4ff" stroke-width="1.2"/><rect x="19" y="21" width="3" height="10" rx="0.5" fill="#a3e635"/><line x1="20.5" y1="18" x2="20.5" y2="21" stroke="#a3e635" stroke-width="1.2"/><rect x="25" y="24" width="3" height="8" rx="0.5" fill="#00d4ff"/><line x1="26.5" y1="21" x2="26.5" y2="24" stroke="#00d4ff" stroke-width="1.2"/><rect x="31" y="17" width="3" height="13" rx="0.5" fill="#a3e635"/><line x1="32.5" y1="14" x2="32.5" y2="17" stroke="#a3e635" stroke-width="1.2"/><polyline points="13,29 19,22 25,25 32,15" stroke="#a3e635" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><div class="auth-logo-text">Quan<span>tario</span></div></div>
+      <div class="auth-logo">
+        <div class="auth-logo-icon"><svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="24" cy="24" r="21" stroke="url(#vgl)" stroke-width="2.5" fill="rgba(0,212,255,0.05)"/><circle cx="24" cy="24" r="15" stroke="url(#vgl)" stroke-width="1.5" fill="rgba(0,212,255,0.04)"/><line x1="3" y1="24" x2="9" y2="24" stroke="url(#vgl)" stroke-width="2.5" stroke-linecap="round"/><circle cx="24" cy="7" r="2" fill="url(#vgl)"/><circle cx="24" cy="41" r="2" fill="url(#vgl)"/><circle cx="7" cy="24" r="2" fill="url(#vgl)"/><circle cx="41" cy="24" r="2" fill="url(#vgl)"/><rect x="13" y="28" width="3" height="6" rx="0.5" fill="#00d4ff"/><line x1="14.5" y1="26" x2="14.5" y2="28" stroke="#00d4ff" stroke-width="1.2"/><rect x="19" y="21" width="3" height="10" rx="0.5" fill="#a3e635"/><line x1="20.5" y1="18" x2="20.5" y2="21" stroke="#a3e635" stroke-width="1.2"/><rect x="25" y="24" width="3" height="8" rx="0.5" fill="#00d4ff"/><line x1="26.5" y1="21" x2="26.5" y2="24" stroke="#00d4ff" stroke-width="1.2"/><rect x="31" y="17" width="3" height="13" rx="0.5" fill="#a3e635"/><line x1="32.5" y1="14" x2="32.5" y2="17" stroke="#a3e635" stroke-width="1.2"/><polyline points="13,29 19,22 25,25 32,15" stroke="#a3e635" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+        <div class="auth-logo-text">Quan<span>tario</span></div>
+      </div>
       <div class="auth-tagline">Your professional trading journal</div>
     </div>
 
@@ -80,7 +93,7 @@
       <div class="auth-back">
         <button class="auth-link" onclick="switchTab('login')">← Back to Login</button>
       </div>
-      <p class="auth-hint">Enter your email and we'll send you a reset link.</p>
+      <p class="auth-hint">Enter your email. If SMTP is configured you'll get an email; otherwise a token appears on screen.</p>
       <div class="form-group">
         <label class="form-label" for="forgot-email">Email</label>
         <input type="email" class="form-input" id="forgot-email"
@@ -94,11 +107,11 @@
       <div class="auth-back">
         <button class="auth-link" onclick="switchTab('login')">← Back to Login</button>
       </div>
-      <p class="auth-hint">Enter your reset token and choose a new password.</p>
+      <p class="auth-hint">Your token is auto-filled if you clicked the email link. Otherwise paste it from the forgot password screen.</p>
       <div class="form-group">
         <label class="form-label" for="reset-token">Reset Token</label>
         <input type="text" class="form-input" id="reset-token"
-          placeholder="Paste your reset token here" autocomplete="off">
+          placeholder="Paste reset token here" autocomplete="off">
       </div>
       <div class="form-group">
         <label class="form-label" for="reset-password">New Password</label>
@@ -116,7 +129,12 @@
     <!-- ── GOOGLE ──────────────────────────────────────────── -->
     <div id="google-section">
       <div class="auth-divider"><span>or</span></div>
-      <button class="google-btn" onclick="handleGoogleLogin()">
+
+      <!-- Google Sign In button rendered by the GSI library (most reliable) -->
+      <div id="google-btn-container"></div>
+
+      <!-- Custom button: shown as fallback if GSI not yet loaded or clientId missing -->
+      <button class="google-btn" id="google-fallback-btn" style="display:none" onclick="handleGoogleFallback()">
         <svg class="google-icon" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -125,6 +143,10 @@
         </svg>
         Continue with Google
       </button>
+
+      <p class="google-note" id="google-note" style="display:none">
+        Google Sign In not configured. See <code>js/config.js</code> for setup instructions.
+      </p>
     </div>
 
   </div><!-- /.auth-box -->
@@ -134,38 +156,117 @@
   <script>
     // ── BOOT ───────────────────────────────────────────────
     if (getToken()) window.location.href = '/app';
-    // Auto-select tab based on what landing page button was clicked
+
+    // Select tab from sessionStorage (set by landing page) or URL params
     (function() {
-      const tab = sessionStorage.getItem('tv_tab');
-      if (tab === 'signup') { sessionStorage.removeItem('tv_tab'); switchTab('signup'); }
-      else if (tab === 'login') { sessionStorage.removeItem('tv_tab'); switchTab('login'); }
+      const tab = sessionStorage.getItem('qr_tab');
+      if (tab) { sessionStorage.removeItem('qr_tab'); switchTab(tab); return; }
+      const p = new URLSearchParams(window.location.search);
+      if (p.get('mode') === 'signup') {
+        switchTab('signup');
+      } else if (p.get('reset')) {
+        document.getElementById('reset-token').value = p.get('reset');
+        switchTab('reset');
+      }
     })();
 
-    // Check URL params — ?mode=signup or ?reset=TOKEN
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('mode') === 'signup') {
-      switchTab('signup');
-    } else if (urlParams.get('reset')) {
-      document.getElementById('reset-token').value = urlParams.get('reset');
-      switchTab('reset');
-    }
-
-    // Pre-warm Render server (free tier sleeps after 15 min)
+    // Pre-warm Render free tier
     (async () => {
-      const slot = document.getElementById('wake-banner-slot');
+      const slot   = document.getElementById('wake-banner-slot');
       const banner = document.createElement('div');
       banner.className = 'wake-banner';
-      banner.textContent = '⏳ Server waking up — may take up to 30 seconds on first load…';
+      banner.textContent = '⏳ Connecting to server — may take ~30s on first load…';
       slot.appendChild(banner);
       try {
         await api.ping();
         banner.remove();
       } catch {
-        banner.textContent = '⚠️ Could not reach server. Check connection or try again.';
+        banner.textContent = '⚠️ Could not reach server. Check your connection or try again.';
       }
     })();
 
-    // ── HELPERS ────────────────────────────────────────────
+    // ── GOOGLE SIGN IN ─────────────────────────────────────
+    let gsiReady = false;
+
+    function initGoogleSignIn() {
+      const clientId = CONFIG.GOOGLE_CLIENT_ID;
+      if (!clientId || clientId === 'YOUR_GOOGLE_CLIENT_ID') {
+        // Not configured — show fallback button with note
+        document.getElementById('google-btn-container').style.display = 'none';
+        document.getElementById('google-fallback-btn').style.display  = 'flex';
+        document.getElementById('google-note').style.display = 'block';
+        return;
+      }
+
+      try {
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback:  handleGoogleCredential,
+          cancel_on_tap_outside: true,
+        });
+
+        google.accounts.id.renderButton(
+          document.getElementById('google-btn-container'),
+          { theme:'filled_black', size:'large', width: 368, text:'continue_with' }
+        );
+
+        gsiReady = true;
+      } catch (e) {
+        console.warn('[Google SSO] init failed:', e.message);
+        showGoogleFallback();
+      }
+    }
+
+    function showGoogleFallback() {
+      document.getElementById('google-btn-container').style.display = 'none';
+      document.getElementById('google-fallback-btn').style.display  = 'flex';
+    }
+
+    // Called when user completes Google sign-in
+    async function handleGoogleCredential(response) {
+      if (!response || !response.credential) {
+        showError('Google Sign In failed — no credential received. Please try again.');
+        return;
+      }
+      showError('');
+      try {
+        const res = await api.googleLogin({ credential: response.credential });
+        saveAuth(res.token, res.user);
+        window.location.href = '/app';
+      } catch (err) {
+        showError(err.message || 'Google Sign In failed. Please try again.');
+      }
+    }
+
+    // Fallback custom button
+    function handleGoogleFallback() {
+      const clientId = CONFIG.GOOGLE_CLIENT_ID;
+      if (!clientId || clientId === 'YOUR_GOOGLE_CLIENT_ID') {
+        showError('Google Sign In is not configured. Please use email & password.');
+        return;
+      }
+      if (typeof google !== 'undefined' && google.accounts && !gsiReady) {
+        initGoogleSignIn();
+      }
+      if (gsiReady) {
+        google.accounts.id.prompt();
+      } else {
+        showError('Google Sign In could not load. Please use email & password.');
+      }
+    }
+
+    // Wait for GSI script to load (it loads async)
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (typeof google !== 'undefined' && google.accounts) {
+          initGoogleSignIn();
+        } else {
+          showGoogleFallback();
+        }
+      }, 500);
+    });
+
+    // ── UI HELPERS ─────────────────────────────────────────
     function switchTab(tab) {
       ['login','signup','forgot','reset'].forEach(f => {
         document.getElementById('form-' + f).classList.toggle('active', f === tab);
@@ -184,19 +285,17 @@
       el.classList.toggle('show', !!msg);
     }
 
-    function showSuccess(msg) {
+    function showSuccess(msg, isHtml = false) {
       const el = document.getElementById('auth-success');
-      el.innerHTML = '';
-      if (msg) { el.textContent = msg; el.classList.add('show'); }
-      else      { el.classList.remove('show'); }
+      if (isHtml) el.innerHTML = msg; else el.textContent = msg;
+      el.classList.toggle('show', !!msg);
     }
 
     function setBtnLoading(id, loading, label) {
       const btn = document.getElementById(id);
+      if (!btn) return;
       btn.disabled = loading;
-      btn.innerHTML = loading
-        ? '<span class="spinner"></span> Please wait…'
-        : label;
+      btn.innerHTML = loading ? '<span class="spinner"></span> Please wait…' : label;
     }
 
     function checkPasswordStrength(val) {
@@ -212,10 +311,10 @@
       if (/[0-9]/.test(val))        score++;
       if (/[^A-Za-z0-9]/.test(val)) score++;
       const levels = [
-        { pct:'20%', color:'var(--accent-red)',    text:'Weak' },
-        { pct:'40%', color:'#ff8c32',              text:'Fair' },
+        { pct:'20%', color:'var(--accent-red)',    text:'Weak'   },
+        { pct:'40%', color:'#ff8c32',              text:'Fair'   },
         { pct:'60%', color:'var(--accent-yellow)', text:'Medium' },
-        { pct:'80%', color:'#a8e063',              text:'Good' },
+        { pct:'80%', color:'#a8e063',              text:'Good'   },
         { pct:'100%',color:'var(--accent-green)',  text:'Strong' },
       ];
       const lvl = levels[Math.min(score - 1, 4)] || levels[0];
@@ -225,7 +324,7 @@
       label.style.color     = lvl.color;
     }
 
-    // ── LOGIN ──────────────────────────────────────────────
+    // ── AUTH HANDLERS ──────────────────────────────────────
     async function handleLogin() {
       const email    = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
@@ -241,7 +340,6 @@
       }
     }
 
-    // ── SIGN UP ────────────────────────────────────────────
     async function handleSignup() {
       const name     = document.getElementById('signup-name').value.trim();
       const email    = document.getElementById('signup-email').value.trim();
@@ -261,98 +359,58 @@
       }
     }
 
-    // ── FORGOT PASSWORD ────────────────────────────────────
     async function handleForgot() {
       const email = document.getElementById('forgot-email').value.trim();
-      if (!email) return showError('Please enter your email');
+      if (!email) return showError('Please enter your email address');
       setBtnLoading('forgot-btn', true, 'Send Reset Link');
       try {
         const res = await api.resetPasswordRequest({ email });
 
         if (res.devToken) {
-          // No email service yet — show token on screen
-          const successEl = document.getElementById('auth-success');
-          successEl.innerHTML = '';
-          successEl.classList.add('show');
+          // Dev mode / no SMTP — show the token directly on screen
+          const tid = 'tkn-' + Date.now();
+          showSuccess(`
+            <div style="margin-bottom:0.4rem">📭 No email configured. Click the token below to copy and continue:</div>
+            <div class="auth-token-box" id="${tid}" title="Click to copy">${res.devToken}</div>
+            <button class="auth-link" style="display:block;margin-top:0.4rem"
+              onclick="document.getElementById('reset-token').value=document.getElementById('${tid}').textContent;switchTab('reset')">
+              → Go to Reset Password →
+            </button>`, true);
 
-          const msg = document.createElement('div');
-          msg.textContent = 'No email service configured. Click the token to copy it, then use it below:';
-          msg.style.marginBottom = '0.75rem';
-          successEl.appendChild(msg);
-
-          const tokenBox = document.createElement('div');
-          tokenBox.style.cssText = 'background:var(--bg-primary);border:1px solid var(--border-color);border-radius:2px;padding:.75rem;font-size:.72rem;word-break:break-all;color:var(--accent-green);cursor:pointer;font-family:monospace;';
-          tokenBox.textContent = res.devToken;
-          tokenBox.title = 'Click to copy';
-          tokenBox.onclick = () => {
-            navigator.clipboard.writeText(res.devToken).then(() => {
-              tokenBox.style.borderColor = 'var(--accent-green)';
-              tokenBox.textContent = '✓ Copied!';
-              setTimeout(() => {
-                document.getElementById('reset-token').value = res.devToken;
-                switchTab('reset');
-              }, 800);
-            });
-          };
-          successEl.appendChild(tokenBox);
-
-          const link = document.createElement('button');
-          link.className = 'auth-link';
-          link.style.cssText = 'display:block;margin-top:.75rem;';
-          link.textContent = '→ Go to Reset Password form';
-          link.onclick = () => {
-            document.getElementById('reset-token').value = res.devToken;
-            switchTab('reset');
-          };
-          successEl.appendChild(link);
+          // Clicking the box copies + navigates
+          document.getElementById(tid)?.addEventListener('click', () => {
+            const token = document.getElementById(tid).textContent.trim();
+            navigator.clipboard?.writeText(token).catch(() => {});
+            document.getElementById('reset-token').value = token;
+            setTimeout(() => switchTab('reset'), 400);
+          });
         } else {
           showSuccess(res.message || 'Reset email sent! Check your inbox and spam folder.');
         }
-
-        setBtnLoading('forgot-btn', false, 'Send Reset Link');
       } catch (err) {
         showError(err.message);
+      } finally {
         setBtnLoading('forgot-btn', false, 'Send Reset Link');
       }
     }
 
-    // ── RESET PASSWORD ─────────────────────────────────────
     async function handleReset() {
       const token       = document.getElementById('reset-token').value.trim();
       const newPassword = document.getElementById('reset-password').value;
       const confirm     = document.getElementById('reset-confirm').value;
-      if (!token)                        return showError('Please paste your reset token');
+      if (!token)                              return showError('Please paste your reset token');
       if (!newPassword || newPassword.length < 6) return showError('Password must be at least 6 characters');
-      if (newPassword !== confirm)        return showError('Passwords do not match');
+      if (newPassword !== confirm)              return showError('Passwords do not match');
       setBtnLoading('reset-btn', true, 'Set New Password');
       try {
         await api.resetPassword({ token, newPassword });
-        showSuccess('Password updated! Redirecting to login…');
-        setTimeout(() => switchTab('login'), 2000);
+        showSuccess('✅ Password updated! Redirecting to login…');
+        setTimeout(() => switchTab('login'), 2500);
       } catch (err) {
         showError(err.message);
       } finally {
         setBtnLoading('reset-btn', false, 'Set New Password');
       }
-    }
-
-    // ── GOOGLE ─────────────────────────────────────────────
-    function handleGoogleLogin() {
-      if (!CONFIG.GOOGLE_CLIENT_ID || CONFIG.GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
-        showError('Google login is not configured yet. Please use email and password.');
-        return;
-      }
-      google.accounts.id.initialize({
-        client_id: CONFIG.GOOGLE_CLIENT_ID,
-        callback: async (response) => {
-          try {
-            const res = await api.googleLogin({ credential: response.credential });
-            saveAuth(res.token, res.user);
-            window.location.href = '/app';
-          } catch (err) { showError(err.message); }
-        }
-      });
-      google.accounts.id.prompt();
     }
 
     // ── ENTER KEY SUPPORT ──────────────────────────────────
