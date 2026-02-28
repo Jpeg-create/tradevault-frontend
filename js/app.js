@@ -17,35 +17,45 @@ let state = {
   showProfileModal: false,
   csvParsed: null, csvImporting: false, csvProgress: 0,
   theme: localStorage.getItem('q_theme') || 'dark',
+  goals: JSON.parse(localStorage.getItem('q_goals') || 'null') || { daily: '', weekly: '', monthly: '' },
+  showOnboarding: !localStorage.getItem('q_onboarded'),
+  onboardingStep: 1,
   // ── AI ──
   aiDebrief:  { loading: false, text: '', error: null, tradeId: null },
   aiPatterns: { loading: false, text: '', error: null, ran: false },
   showUpgradeModal: false,
-  showOnboarding: !localStorage.getItem('q_onboarded'),
-  onboardingStep: 1,
-  // Goals
-  goals: JSON.parse(localStorage.getItem('q_goals') || 'null') || { daily: '', weekly: '', monthly: '' },
-  // Risk Calculator
-  riskCalc: { accountSize: '', riskPct: '1', entryPrice: '', stopLoss: '', direction: 'long', result: null },
 };
 
-// Apply theme on load — set on both html and body
+// Apply theme immediately
 (function() {
-  const t = localStorage.getItem('q_theme') || 'dark';
+  var t = localStorage.getItem('q_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', t);
   if (document.body) document.body.setAttribute('data-theme', t);
 })();
 
 function toggleTheme() {
-  const next = state.theme === 'dark' ? 'light' : 'dark';
+  var next = state.theme === 'dark' ? 'light' : 'dark';
   state.theme = next;
   localStorage.setItem('q_theme', next);
   document.documentElement.setAttribute('data-theme', next);
   document.body.setAttribute('data-theme', next);
-  // Update PWA theme-color meta
-  const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme) metaTheme.content = next === 'dark' ? '#FF6535' : '#FFFCFB';
   render();
+}
+
+function themeToggleBtn() {
+  var isDark = state.theme === 'dark';
+  var icon = isDark
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light Mode'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark Mode';
+  return '<button class="btn-theme-toggle btn-sm" style="width:100%;margin-top:0.5rem" onclick="toggleTheme()">' + icon + '</button>';
+}
+
+function themeIconBtn() {
+  var isDark = state.theme === 'dark';
+  var icon = isDark
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  return '<button class="btn-icon-theme" onclick="toggleTheme()" title="Toggle theme">' + icon + '</button>';
 }
 
 // ── TOAST ─────────────────────────────────────────────────
@@ -255,7 +265,7 @@ const NAV_ICONS = {
   brokers:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
   profile:     `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
   goals:       `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
-  riskcalc:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/><line x1="8" y1="6" x2="16" y2="6"/></svg>`,
+  riskcalc:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>`,
   leaderboard: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="12" width="6" height="10"/><rect x="9" y="7" width="6" height="15"/><rect x="16" y="3" width="6" height="19"/></svg>`,
 };
 
@@ -273,7 +283,7 @@ function render() {
       <!-- ── DESKTOP SIDEBAR ─── -->
       <div class="sidebar">
         <div class="logo">
-          <div class="logo-icon"><svg width="34" height="34" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogo" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#qlogo)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#qlogo)" opacity="0.12"/><circle cx="16" cy="16" r="2.2" fill="url(#qlogo)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#qlogo)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#qlogo)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#qlogo)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#qlogo)"/></svg></div>
+          <div class="logo-icon"><svg width="34" height="34" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="qlogo" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#qlogo)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#qlogo)" opacity="0.10"/><circle cx="16" cy="16" r="2.2" fill="url(#qlogo)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#qlogo)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#qlogo)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#qlogo)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#qlogo)"/></svg></div>
           <div class="logo-text">Quan<span>tario</span></div>
         </div>
         <nav style="flex:1">
@@ -301,12 +311,7 @@ function render() {
             </div>
             <span class="sidebar-profile-icon">${NAV_ICONS.profile}</span>
           </button>
-          <button class="btn btn-theme-toggle btn-sm" style="width:100%;margin-top:0.5rem" onclick="toggleTheme()">
-            ${state.theme === 'dark'
-              ? \`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light Mode\`
-              : \`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark Mode\`
-            }
-          </button>
+          ${themeToggleBtn()}
           <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:0.5rem" onclick="handleLogout()">Logout</button>
           <div class="sync-status">
             <div class="sync-dot ${state.syncing ? 'syncing' : ''}"></div>
@@ -320,16 +325,11 @@ function render() {
         <!-- Mobile top bar -->
         <div class="mobile-topbar">
           <div class="logo" style="margin-bottom:0">
-            <div class="logo-icon" style="width:22px;height:22px"><svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#qlogot)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#qlogot)" opacity="0.12"/><circle cx="16" cy="16" r="2.2" fill="url(#qlogot)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#qlogot)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#qlogot)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#qlogot)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#qlogot)"/></svg></div>
+            <div class="logo-icon" style="width:22px;height:22px"><svg width="28" height="28" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#qlogot)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#qlogot)" opacity="0.10"/><circle cx="16" cy="16" r="2.2" fill="url(#qlogot)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#qlogot)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#qlogot)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#qlogot)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#qlogot)"/></svg></div>
             <div class="logo-text" style="font-size:0.9rem">Quan<span>tario</span></div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem">
-            <button class="btn-icon-theme" onclick="toggleTheme()" title="Toggle theme">
-              ${state.theme === 'dark'
-                ? \`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>\`
-                : \`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>\`
-              }
-            </button>
+            ${themeIconBtn()}
             <div class="sync-dot ${state.syncing ? 'syncing' : ''}" style="width:8px;height:8px"></div>
             <button class="mobile-avatar" onclick="openProfileModal()">${esc((user.name||'U').charAt(0).toUpperCase())}</button>
           </div>
@@ -347,7 +347,7 @@ function render() {
           ${NAV_ICONS.trades}<span>Trades</span>
         </button>
         <button class="bottom-nav-fab" onclick="openAddTradeModal()">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#qlogot)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#qlogot)" opacity="0.12"/><circle cx="16" cy="16" r="2.2" fill="url(#qlogot)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#qlogot)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#qlogot)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#qlogot)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#qlogot)"/></svg>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#qlogot)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#qlogot)" opacity="0.10"/><circle cx="16" cy="16" r="2.2" fill="url(#qlogot)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#qlogot)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#qlogot)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#qlogot)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#qlogot)"/></svg>
         </button>
         <button class="bottom-nav-item ${state.currentView === 'analytics' ? 'active' : ''}" onclick="changeView('analytics')">
           ${NAV_ICONS.analytics}<span>Stats</span>
@@ -361,7 +361,7 @@ function render() {
       ${state.showTradeModal   ? tradeModal()   : ''}
       ${state.showProfileModal ? profileModal() : ''}
       ${state.showUpgradeModal ? upgradeModal() : ''}
-      ${state.showOnboarding && !state.loading  ? onboardingModal() : ''}
+      ${state.showOnboarding && !state.loading ? onboardingModal() : ''}
     </div>
   `;
 }
@@ -506,31 +506,6 @@ function tradeCard(t, showDelete = false) {
 
 // ── ANALYTICS ─────────────────────────────────────────────
 function analytics(s) {
-  // ── Build equity curve data ──────────────────────────────
-  const sorted = [...state.trades]
-    .filter(t => t.exit_date)
-    .sort((a, b) => new Date(a.exit_date) - new Date(b.exit_date));
-
-  let cumulative = 0;
-  const equity = sorted.map(t => {
-    cumulative += Number(t.pnl);
-    return { date: new Date(t.exit_date), pnl: Number(t.pnl), cum: cumulative };
-  });
-
-  // ── Daily P&L bar data ───────────────────────────────────
-  const dailyMap = {};
-  sorted.forEach(t => {
-    const key = new Date(t.exit_date).toLocaleDateString('en-US', { month:'short', day:'numeric' });
-    dailyMap[key] = (dailyMap[key] || 0) + Number(t.pnl);
-  });
-  const dailyBars = Object.entries(dailyMap).slice(-20); // last 20 trading days
-
-  // ── Win/Loss donut data ──────────────────────────────────
-  const wins   = state.trades.filter(t => Number(t.pnl) > 0).length;
-  const losses = state.trades.filter(t => Number(t.pnl) < 0).length;
-  const be     = state.trades.filter(t => Number(t.pnl) === 0).length;
-
-  // ── Strategy breakdown ───────────────────────────────────
   const byStrategy = state.trades.reduce((acc, t) => {
     const k = t.strategy || 'No Strategy';
     if (!acc[k]) acc[k] = { pnl: 0, count: 0, wins: 0 };
@@ -545,273 +520,76 @@ function analytics(s) {
     return acc;
   }, {});
 
-  // ── SVG equity curve ─────────────────────────────────────
-  function equityCurve() {
-    if (equity.length < 2) return `
-      <div style="display:flex;align-items:center;justify-content:center;height:180px;color:var(--text-muted);font-size:0.8rem;flex-direction:column;gap:0.5rem">
-        <div style="font-size:2rem;opacity:0.25">📈</div>Log at least 2 trades to see your equity curve
-      </div>`;
-
-    const W = 600, H = 160, PAD = { t: 12, r: 16, b: 28, l: 50 };
-    const minV = Math.min(0, ...equity.map(p => p.cum));
-    const maxV = Math.max(0, ...equity.map(p => p.cum));
-    const range = maxV - minV || 1;
-    const plotW = W - PAD.l - PAD.r;
-    const plotH = H - PAD.t - PAD.b;
-
-    const toX = i => PAD.l + (i / (equity.length - 1)) * plotW;
-    const toY = v => PAD.t + plotH - ((v - minV) / range) * plotH;
-
-    const zeroY = toY(0);
-
-    // Build SVG path
-    const pts = equity.map((p, i) => `${toX(i).toFixed(1)},${toY(p.cum).toFixed(1)}`);
-    const linePath = `M ${pts.join(' L ')}`;
-    // Fill path (close to zero line)
-    const fillPath = `M ${toX(0).toFixed(1)},${zeroY.toFixed(1)} L ${pts.join(' L ')} L ${toX(equity.length-1).toFixed(1)},${zeroY.toFixed(1)} Z`;
-
-    const lastVal = equity[equity.length - 1].cum;
-    const color = lastVal >= 0 ? 'var(--green)' : 'var(--red)';
-    const fillColor = lastVal >= 0 ? 'rgba(48,209,88,0.12)' : 'rgba(255,59,48,0.10)';
-
-    // Y axis labels
-    const yLabels = [minV, minV + range * 0.5, maxV].map(v => ({
-      val: v, y: toY(v)
-    }));
-
-    // X axis: show first, middle, last date label
-    const xSamples = [0, Math.floor(equity.length/2), equity.length-1].map(i => ({
-      label: equity[i].date.toLocaleDateString('en-US', { month:'short', day:'numeric' }),
-      x: toX(i)
-    }));
-
-    return `
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:180px;display:block;overflow:visible" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="eq-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="${lastVal >= 0 ? 'rgba(48,209,88,0.22)' : 'rgba(255,59,48,0.18)'}"/>
-            <stop offset="100%" stop-color="${lastVal >= 0 ? 'rgba(48,209,88,0)' : 'rgba(255,59,48,0)'}"/>
-          </linearGradient>
-        </defs>
-        <!-- Grid lines -->
-        ${yLabels.map(l => `
-          <line x1="${PAD.l}" y1="${l.y.toFixed(1)}" x2="${W-PAD.r}" y2="${l.y.toFixed(1)}"
-            stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3,3"/>
-          <text x="${PAD.l - 6}" y="${(l.y + 4).toFixed(1)}" text-anchor="end"
-            fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">
-            ${l.val >= 0 ? '+' : ''}$${Math.round(l.val)}
-          </text>`).join('')}
-        <!-- Zero baseline -->
-        <line x1="${PAD.l}" y1="${zeroY.toFixed(1)}" x2="${W-PAD.r}" y2="${zeroY.toFixed(1)}"
-          stroke="var(--border-bright)" stroke-width="1"/>
-        <!-- Fill -->
-        <path d="${fillPath}" fill="url(#eq-fill)"/>
-        <!-- Line -->
-        <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Dots: first, last -->
-        <circle cx="${toX(0).toFixed(1)}" cy="${toY(equity[0].cum).toFixed(1)}" r="3.5" fill="${color}" opacity="0.6"/>
-        <circle cx="${toX(equity.length-1).toFixed(1)}" cy="${toY(lastVal).toFixed(1)}" r="4.5" fill="${color}"/>
-        <!-- X axis labels -->
-        ${xSamples.map(s => `
-          <text x="${s.x.toFixed(1)}" y="${(H - 4).toFixed(1)}" text-anchor="middle"
-            fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">${s.label}</text>`).join('')}
-      </svg>`;
-  }
-
-  // ── Daily bars ────────────────────────────────────────────
-  function dailyBarsChart() {
-    if (!dailyBars.length) return `
-      <div style="display:flex;align-items:center;justify-content:center;height:140px;color:var(--text-muted);font-size:0.8rem">No daily data yet</div>`;
-
-    const W = 600, H = 140, PAD = { t: 8, r: 8, b: 32, l: 50 };
-    const vals = dailyBars.map(d => d[1]);
-    const maxAbs = Math.max(1, ...vals.map(v => Math.abs(v)));
-    const plotW = W - PAD.l - PAD.r;
-    const plotH = H - PAD.t - PAD.b;
-    const barW = Math.max(4, plotW / dailyBars.length * 0.6);
-    const gap  = plotW / dailyBars.length;
-    const zeroY = PAD.t + plotH / 2;
-
-    return `
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:140px;display:block;overflow:visible" preserveAspectRatio="none">
-        <!-- Zero line -->
-        <line x1="${PAD.l}" y1="${zeroY}" x2="${W-PAD.r}" y2="${zeroY}"
-          stroke="var(--border-bright)" stroke-width="1"/>
-        <!-- Y labels -->
-        <text x="${PAD.l-6}" y="${PAD.t+4}" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">+$${Math.round(maxAbs)}</text>
-        <text x="${PAD.l-6}" y="${H-PAD.b+4}" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">-$${Math.round(maxAbs)}</text>
-        <!-- Bars -->
-        ${dailyBars.map(([label, val], i) => {
-          const x = PAD.l + i * gap + gap/2 - barW/2;
-          const barH = Math.max(2, (Math.abs(val) / maxAbs) * (plotH / 2));
-          const y = val >= 0 ? zeroY - barH : zeroY;
-          const color = val >= 0 ? 'var(--green)' : 'var(--red)';
-          const showLabel = i === 0 || i === Math.floor(dailyBars.length/2) || i === dailyBars.length-1;
-          return `
-            <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${barH.toFixed(1)}"
-              rx="2" fill="${color}" opacity="0.85"/>
-            ${showLabel ? `<text x="${(x + barW/2).toFixed(1)}" y="${(H-2).toFixed(1)}" text-anchor="middle"
-              fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono,monospace">${label}</text>` : ''}`;
-        }).join('')}
-      </svg>`;
-  }
-
-  // ── Win/Loss donut ─────────────────────────────────────────
-  function donutChart(wins, losses, be, total) {
-    if (!total) return `<div style="font-size:0.75rem;color:var(--text-muted);text-align:center;padding:2rem">No trades</div>`;
-    const cx=60, cy=60, r=46, sw=14;
-    const circ = 2 * Math.PI * r;
-    const wPct = wins/total, lPct = losses/total, bPct = be/total;
-
-    // Donut segments: start at top (-90deg)
-    const wArc = circ * wPct, lArc = circ * lPct, bArc = circ * bPct;
-    const gap = total > 1 ? 2 : 0;
-
-    return `
-      <svg viewBox="0 0 120 120" width="120" height="120" style="flex-shrink:0">
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg-overlay)" stroke-width="${sw}"/>
-        ${wins > 0 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--green)"
-          stroke-width="${sw}" stroke-linecap="round"
-          stroke-dasharray="${wArc - gap} ${circ - wArc + gap}"
-          stroke-dashoffset="${circ * 0.25}" opacity="0.9"/>` : ''}
-        ${losses > 0 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--red)"
-          stroke-width="${sw}" stroke-linecap="round"
-          stroke-dasharray="${lArc - gap} ${circ - lArc + gap}"
-          stroke-dashoffset="${circ * 0.25 - wArc + gap}" opacity="0.9"/>` : ''}
-        ${be > 0 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--amber)"
-          stroke-width="${sw}"
-          stroke-dasharray="${bArc - gap} ${circ - bArc + gap}"
-          stroke-dashoffset="${circ * 0.25 - wArc - lArc + gap*2}" opacity="0.8"/>` : ''}
-        <text x="${cx}" y="${cy - 6}" text-anchor="middle" fill="var(--text-primary)"
-          font-size="14" font-weight="800" font-family="Plus Jakarta Sans,sans-serif">${total}</text>
-        <text x="${cx}" y="${cy + 10}" text-anchor="middle" fill="var(--text-muted)"
-          font-size="8" font-family="Plus Jakarta Sans,sans-serif">trades</text>
-      </svg>`;
-  }
-
   return `
     <div class="page-header"><h1 class="header">Analytics</h1></div>
     <div class="stats-grid">
       ${statCard('Total Trades', s.totalTrades, '')}
-      ${statCard('Win Rate', `${s.winRate}%`, `${wins}W · ${losses}L`)}
+      ${statCard('Win Rate', `${s.winRate}%`, '')}
       ${statCard('Profit Factor', s.profitFactor, '')}
       ${statCard('Total P&L', `${s.totalPnL >= 0 ? '+' : ''}$${s.totalPnL.toFixed(2)}`, '', s.totalPnL >= 0)}
     </div>
 
-    <!-- ── EQUITY CURVE ── -->
+    <!-- ── AI INSIGHTS ── -->
     <div class="card">
-      <div class="chart-card-header">
-        <div>
-          <div class="card-title">Equity Curve</div>
-          <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.2rem">Cumulative P&L over all trades</div>
-        </div>
-        ${equity.length >= 2 ? `
-          <div style="text-align:right">
-            <div class="chart-stat-val ${s.totalPnL >= 0 ? 'positive' : 'negative'}">${s.totalPnL >= 0 ? '+' : ''}$${s.totalPnL.toFixed(2)}</div>
-            <div style="font-size:0.65rem;color:var(--text-muted)">all time</div>
-          </div>` : ''}
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>✨ AI Pattern Insights</span>
+        ${isPremium()
+          ? `<button class="btn btn-ai btn-sm" id="ai-patterns-btn" onclick="doAIPatterns()">
+               ${state.aiPatterns.loading
+                 ? '<span class="spinner"></span> Analysing…'
+                 : state.aiPatterns.ran ? '↺ Re-analyse' : 'Analyse My Trades'}
+             </button>`
+          : aiLockedBtn('Analyse My Trades')}
       </div>
-      <div class="chart-wrap">${equityCurve()}</div>
+      ${state.aiPatterns.text
+        ? `<div class="ai-patterns-output" id="ai-patterns-text">${esc(state.aiPatterns.text).replace(/\n/g,'<br>')}</div>`
+        : state.aiPatterns.loading
+          ? `<div class="ai-patterns-output" id="ai-patterns-text"><span class="ai-cursor"></span></div>`
+          : `<div class="ai-patterns-placeholder">
+               ${isPremium()
+                 ? `<div style="text-align:center;padding:2rem 1rem;color:var(--text-secondary)">
+                      <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.4">📊</div>
+                      <div style="font-size:0.85rem">Click "Analyse My Trades" to find hidden patterns in your data</div>
+                    </div>`
+                 : `<div style="text-align:center;padding:2rem 1rem;color:var(--text-secondary)">
+                      <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.4">👑</div>
+                      <div style="font-size:0.85rem">Upgrade to Premium to unlock AI pattern recognition</div>
+                    </div>`}
+             </div>`
+      }
     </div>
-
-    <!-- ── DAILY P&L BARS ── -->
-    <div class="card">
-      <div class="chart-card-header">
-        <div>
-          <div class="card-title">Daily P&L</div>
-          <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.2rem">Last ${Math.min(20, dailyBars.length)} trading days</div>
-        </div>
-      </div>
-      <div class="chart-wrap">${dailyBarsChart()}</div>
-    </div>
-
-    <!-- ── WIN/LOSS + AI ── -->
-    <div class="charts-row">
-      <div class="card chart-half">
-        <div class="card-title">Win / Loss Breakdown</div>
-        <div class="donut-wrap">
-          ${donutChart(wins, losses, be, state.trades.length)}
-          <div class="donut-legend">
-            <div class="donut-leg"><span class="donut-dot" style="background:var(--green)"></span><span class="donut-lbl">Win</span><span class="donut-val">${wins}</span></div>
-            <div class="donut-leg"><span class="donut-dot" style="background:var(--red)"></span><span class="donut-lbl">Loss</span><span class="donut-val">${losses}</span></div>
-            ${be > 0 ? `<div class="donut-leg"><span class="donut-dot" style="background:var(--amber)"></span><span class="donut-lbl">B/E</span><span class="donut-val">${be}</span></div>` : ''}
-            <div class="donut-leg donut-divider"></div>
-            <div class="donut-leg"><span class="donut-dot" style="background:var(--orange)"></span><span class="donut-lbl">Win Rate</span><span class="donut-val">${s.winRate}%</span></div>
-            <div class="donut-leg"><span class="donut-lbl">Avg Win</span><span class="donut-val positive">+$${s.avgWin.toFixed(0)}</span></div>
-            <div class="donut-leg"><span class="donut-lbl">Avg Loss</span><span class="donut-val negative">-$${Math.abs(s.avgLoss).toFixed(0)}</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card chart-half">
-        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
-          <span>✨ AI Pattern Insights</span>
-          ${isPremium()
-            ? `<button class="btn btn-ai btn-sm" id="ai-patterns-btn" onclick="doAIPatterns()">
-                 ${state.aiPatterns.loading
-                   ? '<span class="spinner"></span> Analysing…'
-                   : state.aiPatterns.ran ? '↺ Re-analyse' : 'Analyse Trades'}
-               </button>`
-            : aiLockedBtn('Analyse Trades')}
-        </div>
-        ${state.aiPatterns.text
-          ? `<div class="ai-patterns-output" id="ai-patterns-text">${esc(state.aiPatterns.text).replace(/\n/g,'<br>')}</div>`
-          : state.aiPatterns.loading
-            ? `<div class="ai-patterns-output" id="ai-patterns-text"><span class="ai-cursor"></span></div>`
-            : `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;color:var(--text-secondary);text-align:center;height:100%;min-height:120px">
-                 <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.3">${isPremium() ? '📊' : '👑'}</div>
-                 <div style="font-size:0.78rem">${isPremium() ? 'Click "Analyse Trades" to find hidden patterns' : 'Upgrade to unlock AI pattern recognition'}</div>
-               </div>`
-        }
-      </div>
-    </div>
-
-    <!-- ── STRATEGY TABLE ── -->
     <div class="card">
       <div class="card-title">Performance by Strategy</div>
       ${!Object.keys(byStrategy).length
         ? empty('📈', 'No data yet', 'Add trades with strategy names to see breakdown')
-        : `<div class="strategy-table">
-            <div class="strat-thead">
-              <div class="strat-th">Strategy</div>
-              <div class="strat-th">P&L</div>
-              <div class="strat-th">Trades</div>
-              <div class="strat-th">Win %</div>
-              <div class="strat-th">Bar</div>
-            </div>
-            ${Object.entries(byStrategy).sort((a,b) => b[1].pnl - a[1].pnl).map(([k, d]) => {
-              const wr = ((d.wins/d.count)*100).toFixed(0);
-              const allPnls = Object.values(byStrategy).map(x => Math.abs(x.pnl));
-              const maxPnl = Math.max(1, ...allPnls);
-              const barW = (Math.abs(d.pnl) / maxPnl * 100).toFixed(1);
-              return `
-                <div class="strat-row">
-                  <div class="strat-td strat-name">${esc(k)}</div>
-                  <div class="strat-td ${d.pnl >= 0 ? 'positive' : 'negative'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(0)}</div>
-                  <div class="strat-td" style="color:var(--text-secondary)">${d.count}</div>
-                  <div class="strat-td" style="color:var(--text-secondary)">${wr}%</div>
-                  <div class="strat-td strat-bar-cell">
-                    <div class="strat-bar" style="width:${barW}%;background:${d.pnl >= 0 ? 'var(--green)' : 'var(--red)'}"></div>
-                  </div>
-                </div>`;
-            }).join('')}
-          </div>`}
+        : Object.entries(byStrategy).sort((a, b) => b[1].pnl - a[1].pnl).map(([k, d]) => `
+            <div class="trade-item" style="cursor:default">
+              <div class="trade-header">
+                <span class="trade-symbol">${esc(k)}</span>
+                <span class="trade-pnl ${d.pnl >= 0 ? 'positive' : 'negative'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</span>
+              </div>
+              <div class="trade-meta">
+                <span class="trade-meta-item">📊 ${d.count} trades</span>
+                <span class="trade-meta-item">✅ ${d.wins} wins</span>
+                <span class="trade-meta-item">📈 ${((d.wins / d.count) * 100).toFixed(1)}% win rate</span>
+              </div>
+            </div>`).join('')}
     </div>
-
-    <!-- ── ASSET DISTRIBUTION ── -->
     <div class="card">
       <div class="card-title">Asset Distribution</div>
       ${!Object.keys(byAsset).length
         ? empty('📊', 'No data yet', 'Add trades to see asset breakdown')
-        : Object.entries(byAsset).sort((a,b) => b[1]-a[1]).map(([asset, count]) => {
+        : Object.entries(byAsset).map(([asset, count]) => {
             const pct = ((count / state.trades.length) * 100).toFixed(1);
             return `
-              <div style="margin-bottom:0.85rem">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
+              <div class="trade-item" style="cursor:default;margin-bottom:0.875rem">
+                <div class="trade-header" style="margin-bottom:0.5rem">
                   <span class="badge badge-${asset}">${asset}</span>
-                  <span style="color:var(--text-secondary);font-size:0.75rem;font-family:'JetBrains Mono',monospace">${count} · ${pct}%</span>
+                  <span style="color:var(--text-secondary);font-size:0.82rem">${count} trades · ${pct}%</span>
                 </div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+                <div class="progress-bar" style="margin-top:0">
+                  <div class="progress-fill" style="width:${pct}%"></div>
+                </div>
               </div>`;
           }).join('')}
     </div>`;
@@ -1286,37 +1064,6 @@ function tradeModal() {
             ${isView ? 'disabled' : ''}>${esc(d.notes || '')}</textarea>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" style="display:flex;align-items:center;gap:0.5rem">
-            📸 Chart Screenshot
-            <span style="font-size:0.62rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">Optional — paste or upload</span>
-          </label>
-          ${isView && d.screenshot_url
-            ? `<div class="screenshot-preview">
-                <img src="${esc(d.screenshot_url)}" alt="Trade chart" onclick="this.parentElement.classList.toggle('expanded')" />
-                <div class="screenshot-hint">Tap to expand</div>
-               </div>`
-            : isView
-              ? `<div class="screenshot-empty">No screenshot attached</div>`
-              : `<div class="screenshot-drop" id="ss-drop"
-                  onclick="document.getElementById('ss-file').click()"
-                  ondragover="event.preventDefault();this.classList.add('drag-over')"
-                  ondragleave="this.classList.remove('drag-over')"
-                  ondrop="handleScreenshotDrop(event)">
-                  <input type="file" id="ss-file" accept="image/*" style="display:none" onchange="handleScreenshotFile(event)">
-                  <div id="ss-preview-wrap" style="display:none">
-                    <img id="ss-preview-img" style="max-width:100%;max-height:180px;border-radius:6px;display:block;margin:0 auto" />
-                    <button type="button" style="font-size:0.68rem;color:var(--red);background:none;border:none;cursor:pointer;margin-top:0.4rem" onclick="event.stopPropagation();clearScreenshot()">✕ Remove</button>
-                  </div>
-                  <div id="ss-placeholder">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4;margin-bottom:0.5rem"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <div style="font-size:0.75rem;color:var(--text-muted)">Drop image or click to upload</div>
-                    <div style="font-size:0.65rem;color:var(--text-muted);margin-top:0.2rem">PNG, JPG, WebP — max 5MB</div>
-                  </div>
-                </div>`
-          }
-        </div>
-
         ${isView ? `
           <div class="pnl-result" style="border-color:${pnl >= 0 ? 'var(--orange)' : 'var(--red)'}">
             <div class="stat-label">Final P&L</div>
@@ -1357,560 +1104,6 @@ function tradeModal() {
           </div>`}
       </div>
     </div>`;
-}
-
-// ── SCREENSHOT HELPERS ───────────────────────────────────
-let _ssFile = null;
-
-function handleScreenshotDrop(e) {
-  e.preventDefault();
-  document.getElementById('ss-drop')?.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) previewScreenshot(file);
-  else toast('Please drop an image file', 'error');
-}
-
-function handleScreenshotFile(e) {
-  const file = e.target.files[0];
-  if (file) previewScreenshot(file);
-}
-
-function previewScreenshot(file) {
-  if (file.size > 5 * 1024 * 1024) { toast('Image must be under 5MB', 'error'); return; }
-  _ssFile = file;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const img = document.getElementById('ss-preview-img');
-    const wrap = document.getElementById('ss-preview-wrap');
-    const placeholder = document.getElementById('ss-placeholder');
-    if (img) img.src = e.target.result;
-    if (wrap) wrap.style.display = 'block';
-    if (placeholder) placeholder.style.display = 'none';
-  };
-  reader.readAsDataURL(file);
-}
-
-function clearScreenshot() {
-  _ssFile = null;
-  const wrap = document.getElementById('ss-preview-wrap');
-  const placeholder = document.getElementById('ss-placeholder');
-  const fileInput = document.getElementById('ss-file');
-  if (wrap) wrap.style.display = 'none';
-  if (placeholder) placeholder.style.display = 'block';
-  if (fileInput) fileInput.value = '';
-}
-
-// Paste screenshot from clipboard
-document.addEventListener('paste', (e) => {
-  if (!state.showTradeModal || state.selectedTrade) return;
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      const file = item.getAsFile();
-      if (file) previewScreenshot(file);
-      break;
-    }
-  }
-});
-
-// ── ONBOARDING ────────────────────────────────────────────
-function dismissOnboarding() {
-  localStorage.setItem('q_onboarded', '1');
-  state.showOnboarding = false;
-  render();
-}
-
-function nextOnboardingStep() {
-  if (state.onboardingStep < 3) {
-    state.onboardingStep++;
-    render();
-  } else {
-    dismissOnboarding();
-  }
-}
-
-function onboardingModal() {
-  const steps = [
-    {
-      icon: `<svg width="52" height="52" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="obl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#obl)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#obl)" opacity="0.12"/><circle cx="16" cy="16" r="2.2" fill="url(#obl)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#obl)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#obl)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#obl)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#obl)"/></svg>`,
-      heading: 'Welcome to Quantario',
-      sub: "You're about to build the best trading habit of your career. Your journal is empty — let's change that in under 2 minutes.",
-      cta: "Let's go →",
-    },
-    {
-      icon: `<div style="font-size:2.8rem">📊</div>`,
-      heading: 'How do you want to log trades?',
-      sub: `
-        <div class="onboarding-options">
-          <div class="onboarding-option" onclick="changeView('import');dismissOnboarding()">
-            <div class="oo-icon">📁</div>
-            <div>
-              <div class="oo-title">CSV Import</div>
-              <div class="oo-desc">Upload a file from your broker — all trades in seconds</div>
-            </div>
-            <div class="oo-arrow">→</div>
-          </div>
-          <div class="onboarding-option" onclick="changeView('brokers');dismissOnboarding()">
-            <div class="oo-icon">🔌</div>
-            <div>
-              <div class="oo-title">Connect Broker</div>
-              <div class="oo-desc">Auto-sync with Alpaca or Binance</div>
-            </div>
-            <div class="oo-arrow">→</div>
-          </div>
-          <div class="onboarding-option" onclick="openAddTradeModal();dismissOnboarding()">
-            <div class="oo-icon">✏️</div>
-            <div>
-              <div class="oo-title">Log Manually</div>
-              <div class="oo-desc">Enter your first trade right now</div>
-            </div>
-            <div class="oo-arrow">→</div>
-          </div>
-        </div>`,
-      cta: 'Skip for now',
-      skipOnly: true,
-    },
-    {
-      icon: `<div style="font-size:2.8rem">🎯</div>`,
-      heading: 'Set your first goal',
-      sub: `
-        <p style="color:var(--text-secondary);font-size:0.83rem;margin-bottom:1.25rem">Traders with written goals earn 3× more consistently. Set a target — even a rough one.</p>
-        <div class="form-group">
-          <label class="form-label">Daily P&L Target ($)</label>
-          <input class="form-input" id="ob-daily" placeholder="e.g. 200" value="${state.goals.daily}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Weekly P&L Target ($)</label>
-          <input class="form-input" id="ob-weekly" placeholder="e.g. 1000" value="${state.goals.weekly}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Monthly P&L Target ($)</label>
-          <input class="form-input" id="ob-monthly" placeholder="e.g. 4000" value="${state.goals.monthly}">
-        </div>`,
-      cta: 'Save Goals & Start',
-      onSave: () => {
-        const d = document.getElementById('ob-daily')?.value || '';
-        const w = document.getElementById('ob-weekly')?.value || '';
-        const m = document.getElementById('ob-monthly')?.value || '';
-        state.goals = { daily: d, weekly: w, monthly: m };
-        localStorage.setItem('q_goals', JSON.stringify(state.goals));
-      }
-    },
-  ];
-  const step = steps[state.onboardingStep - 1];
-
-  return \`
-    <div class="modal onboarding-backdrop">
-      <div class="modal-content onboarding-modal" onclick="event.stopPropagation()">
-        <!-- Step dots -->
-        <div class="onboarding-dots">
-          \${[1,2,3].map(i => \`<div class="onboarding-dot \${i === state.onboardingStep ? 'active' : i < state.onboardingStep ? 'done' : ''}"></div>\`).join('')}
-        </div>
-
-        <div class="onboarding-icon">\${step.icon}</div>
-        <h2 class="onboarding-heading">\${step.heading}</h2>
-        <div class="onboarding-sub">\${step.sub}</div>
-
-        <div class="onboarding-actions">
-          \${!step.skipOnly
-            ? \`<button class="btn btn-primary" style="width:100%" onclick="
-                \${state.onboardingStep === 3 ? \`
-                  (function(){
-                    var d=document.getElementById('ob-daily')?.value||'';
-                    var w=document.getElementById('ob-weekly')?.value||'';
-                    var m=document.getElementById('ob-monthly')?.value||'';
-                    state.goals={daily:d,weekly:w,monthly:m};
-                    localStorage.setItem('q_goals',JSON.stringify(state.goals));
-                  })();
-                \` : ''}
-                nextOnboardingStep()
-              ">\${step.cta}</button>\`
-            : ''
-          }
-          \${state.onboardingStep > 1
-            ? \`<button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="nextOnboardingStep()">Skip for now</button>\`
-            : ''
-          }
-          \${state.onboardingStep === 1
-            ? \`<button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="dismissOnboarding()">I'll figure it out myself</button>\`
-            : ''
-          }
-        </div>
-
-        <button class="onboarding-close" onclick="dismissOnboarding()" title="Close">✕</button>
-      </div>
-    </div>\`;
-}
-
-// ── GOALS VIEW ────────────────────────────────────────────
-function goalsView(stats) {
-  const goals = state.goals;
-  const today = new Date().toDateString();
-  const thisWeekStart = new Date();
-  thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
-  const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
-  const todayPnL    = state.trades.filter(t => t.exit_date && new Date(t.exit_date).toDateString() === today).reduce((s,t) => s+Number(t.pnl),0);
-  const weekPnL     = state.trades.filter(t => t.exit_date && new Date(t.exit_date) >= thisWeekStart).reduce((s,t) => s+Number(t.pnl),0);
-  const monthPnL    = state.trades.filter(t => t.exit_date && new Date(t.exit_date) >= thisMonthStart).reduce((s,t) => s+Number(t.pnl),0);
-
-  function goalCard(period, label, current, target) {
-    const t = parseFloat(target);
-    const hasTarget = !isNaN(t) && t > 0;
-    const pct = hasTarget ? Math.max(0, Math.min(100, (current / t) * 100)) : 0;
-    const pos = current >= 0;
-    const reached = hasTarget && current >= t;
-    return \`
-      <div class="goal-card \${reached ? 'goal-reached' : ''}">
-        \${reached ? '<div class="goal-badge">✓ Reached!</div>' : ''}
-        <div class="goal-period">\${label}</div>
-        <div class="goal-current \${pos ? 'positive' : 'negative'}">\${pos?'+':''}\$\${current.toFixed(2)}</div>
-        \${hasTarget
-          ? \`<div class="goal-target">Target: \$\${t.toFixed(0)}</div>
-             <div class="progress-bar" style="margin-top:0.75rem">
-               <div class="progress-fill" style="width:\${pct}%"></div>
-             </div>
-             <div class="goal-pct">\${pct.toFixed(0)}% of goal</div>\`
-          : \`<div class="goal-no-target">No target set</div>\`
-        }
-      </div>\`;
-  }
-
-  return \`
-    <div class="page-header">
-      <h1 class="header">Goals & Targets</h1>
-      <button class="btn btn-primary hide-mobile" onclick="openGoalEditor()">✎ Edit Goals</button>
-    </div>
-
-    <div class="goals-grid">
-      \${goalCard('daily',   'Today',     todayPnL,  goals.daily)}
-      \${goalCard('weekly',  'This Week', weekPnL,   goals.weekly)}
-      \${goalCard('monthly', 'This Month',monthPnL,  goals.monthly)}
-    </div>
-
-    <div class="card" style="margin-top:1.5rem">
-      <div class="card-title">📈 All-Time Performance</div>
-      <div class="goals-alltime">
-        <div class="alltime-stat">
-          <div class="alltime-val">\${state.trades.length}</div>
-          <div class="alltime-lbl">Total Trades</div>
-        </div>
-        <div class="alltime-stat">
-          <div class="alltime-val \${stats.totalPnL >= 0 ? 'positive' : 'negative'}">\${stats.totalPnL >= 0?'+':''}\$\${stats.totalPnL.toFixed(2)}</div>
-          <div class="alltime-lbl">Total P&L</div>
-        </div>
-        <div class="alltime-stat">
-          <div class="alltime-val">\${stats.winRate}%</div>
-          <div class="alltime-lbl">Win Rate</div>
-        </div>
-        <div class="alltime-stat">
-          <div class="alltime-val">\${stats.profitFactor}</div>
-          <div class="alltime-lbl">Profit Factor</div>
-        </div>
-        <div class="alltime-stat">
-          <div class="alltime-val">\${state.journalEntries.length}</div>
-          <div class="alltime-lbl">Journal Entries</div>
-        </div>
-        <div class="alltime-stat">
-          <div class="alltime-val">\${state.brokers.length}</div>
-          <div class="alltime-lbl">Connected Brokers</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:1.25rem">
-      <div class="card-title">🎯 Edit Targets</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Daily Target ($)</label>
-          <input class="form-input" id="g-daily" placeholder="e.g. 200" value="\${esc(goals.daily)}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Weekly Target ($)</label>
-          <input class="form-input" id="g-weekly" placeholder="e.g. 1000" value="\${esc(goals.weekly)}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Monthly Target ($)</label>
-          <input class="form-input" id="g-monthly" placeholder="e.g. 4000" value="\${esc(goals.monthly)}">
-        </div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="saveGoals()">Save Targets</button>
-    </div>\`;
-}
-
-function saveGoals() {
-  const d = document.getElementById('g-daily')?.value || '';
-  const w = document.getElementById('g-weekly')?.value || '';
-  const m = document.getElementById('g-monthly')?.value || '';
-  state.goals = { daily: d, weekly: w, monthly: m };
-  localStorage.setItem('q_goals', JSON.stringify(state.goals));
-  toast('Goals saved!', 'success');
-  render();
-}
-
-function openGoalEditor() {
-  document.getElementById('g-daily')?.focus();
-}
-
-// ── RISK CALCULATOR VIEW ──────────────────────────────────
-function riskCalcView() {
-  const rc = state.riskCalc;
-
-  function calcRisk() {
-    const acc  = parseFloat(document.getElementById('rc-acc')?.value || 0);
-    const rPct = parseFloat(document.getElementById('rc-rpct')?.value || 0);
-    const ep   = parseFloat(document.getElementById('rc-ep')?.value || 0);
-    const sl   = parseFloat(document.getElementById('rc-sl')?.value || 0);
-    const tp   = parseFloat(document.getElementById('rc-tp')?.value || 0);
-    const dir  = document.getElementById('rc-dir')?.value || 'long';
-
-    if (!acc || !rPct || !ep || !sl) { toast('Fill in all required fields', 'warn'); return; }
-
-    const riskAmt   = acc * (rPct / 100);
-    const slDist    = Math.abs(ep - sl);
-    if (slDist === 0) { toast('Stop loss cannot equal entry price', 'error'); return; }
-    const posSize   = riskAmt / slDist;
-    const riskValid = (dir === 'long' ? ep > sl : ep < sl);
-    const tpDist    = tp ? Math.abs(tp - ep) : null;
-    const rr        = tpDist ? (tpDist / slDist).toFixed(2) : null;
-    const potential = tpDist ? (posSize * tpDist).toFixed(2) : null;
-
-    state.riskCalc = { ...state.riskCalc,
-      accountSize: acc, riskPct: rPct, entryPrice: ep, stopLoss: sl, takeProfit: tp, direction: dir,
-      result: { riskAmt, slDist, posSize, rr, potential, riskValid }
-    };
-    render();
-  }
-
-  const r = rc.result;
-
-  return \`
-    <div class="page-header">
-      <h1 class="header">Risk Calculator</h1>
-    </div>
-    <div class="riskcalc-layout">
-      <div class="card riskcalc-inputs">
-        <div class="card-title">⚙️ Position Parameters</div>
-        <div class="form-group">
-          <label class="form-label">Account Size ($) *</label>
-          <input type="number" class="form-input" id="rc-acc" placeholder="e.g. 10000" value="\${rc.accountSize || ''}">
-        </div>
-        <div class="form-group">
-          <label class="form-label" style="display:flex;justify-content:space-between">
-            <span>Risk Per Trade (%)</span>
-            <span class="rc-pct-badge" id="rc-pct-lbl">\${rc.riskPct || 1}%</span>
-          </label>
-          <input type="range" class="form-range" id="rc-rpct" min="0.1" max="5" step="0.1"
-            value="\${rc.riskPct || 1}"
-            oninput="document.getElementById('rc-pct-lbl').textContent=this.value+'%'">
-          <div class="rc-range-labels"><span>0.1%</span><span>1%</span><span>2%</span><span>3%</span><span>5%</span></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Direction</label>
-            <select class="form-select" id="rc-dir">
-              <option value="long"  \${rc.direction==='long'  ?'selected':''}>Long (Buy)</option>
-              <option value="short" \${rc.direction==='short' ?'selected':''}>Short (Sell)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Entry Price *</label>
-            <input type="number" step="any" class="form-input" id="rc-ep" placeholder="0.00" value="\${rc.entryPrice || ''}">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Stop Loss *</label>
-            <input type="number" step="any" class="form-input" id="rc-sl" placeholder="0.00" value="\${rc.stopLoss || ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Take Profit</label>
-            <input type="number" step="any" class="form-input" id="rc-tp" placeholder="Optional" value="\${rc.takeProfit || ''}">
-          </div>
-        </div>
-        <button class="btn btn-primary" style="width:100%" onclick="(function(){
-          state.riskCalc.accountSize = document.getElementById('rc-acc').value;
-          state.riskCalc.riskPct     = document.getElementById('rc-rpct').value;
-          state.riskCalc.entryPrice  = document.getElementById('rc-ep').value;
-          state.riskCalc.stopLoss    = document.getElementById('rc-sl').value;
-          state.riskCalc.takeProfit  = document.getElementById('rc-tp').value;
-          state.riskCalc.direction   = document.getElementById('rc-dir').value;
-          var acc=parseFloat(state.riskCalc.accountSize)||0;
-          var rPct=parseFloat(state.riskCalc.riskPct)||0;
-          var ep=parseFloat(state.riskCalc.entryPrice)||0;
-          var sl=parseFloat(state.riskCalc.stopLoss)||0;
-          var tp=parseFloat(state.riskCalc.takeProfit)||0;
-          var dir=state.riskCalc.direction;
-          if(!acc||!rPct||!ep||!sl){toast('Fill in all required fields','warn');return;}
-          var riskAmt=acc*(rPct/100);
-          var slDist=Math.abs(ep-sl);
-          if(slDist===0){toast('Stop loss cannot equal entry price','error');return;}
-          var posSize=riskAmt/slDist;
-          var tpDist=tp?Math.abs(tp-ep):null;
-          var rr=tpDist?(tpDist/slDist).toFixed(2):null;
-          var potential=tpDist?(posSize*tpDist).toFixed(2):null;
-          state.riskCalc.result={riskAmt,slDist,posSize,rr,potential};
-          render();
-        })()">Calculate Position Size</button>
-      </div>
-
-      <div class="riskcalc-results">
-        \${r ? \`
-          <div class="rc-result-card rc-primary">
-            <div class="rc-result-label">Position Size</div>
-            <div class="rc-result-value">\${r.posSize.toFixed(r.posSize < 10 ? 4 : 2)}</div>
-            <div class="rc-result-sub">units / shares / contracts</div>
-          </div>
-          <div class="rc-result-card">
-            <div class="rc-result-label">Max Risk</div>
-            <div class="rc-result-value negative">-\$\${r.riskAmt.toFixed(2)}</div>
-            <div class="rc-result-sub">\${rc.riskPct}% of account</div>
-          </div>
-          <div class="rc-result-card">
-            <div class="rc-result-label">Stop Distance</div>
-            <div class="rc-result-value">\${r.slDist.toFixed(4)}</div>
-            <div class="rc-result-sub">price points</div>
-          </div>
-          \${r.rr ? \`
-            <div class="rc-result-card \${parseFloat(r.rr) >= 2 ? 'rc-good' : parseFloat(r.rr) < 1 ? 'rc-bad' : ''}">
-              <div class="rc-result-label">Risk/Reward</div>
-              <div class="rc-result-value">1 : \${r.rr}</div>
-              <div class="rc-result-sub">\${parseFloat(r.rr) >= 2 ? '✓ Good setup' : parseFloat(r.rr) < 1 ? '⚠ Poor ratio' : 'Acceptable'}</div>
-            </div>
-            <div class="rc-result-card rc-good">
-              <div class="rc-result-label">Potential Profit</div>
-              <div class="rc-result-value positive">+\$\${r.potential}</div>
-              <div class="rc-result-sub">if TP is hit</div>
-            </div>
-          \` : ''}
-        \` : \`
-          <div class="rc-empty">
-            <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3">🧮</div>
-            <div style="font-size:0.9rem;font-weight:700;margin-bottom:0.4rem">Results appear here</div>
-            <div style="font-size:0.78rem;color:var(--text-muted)">Fill in the form and click Calculate</div>
-          </div>
-        \`}
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:1.25rem">
-      <div class="card-title">📚 Risk Rules</div>
-      <div class="risk-rules">
-        <div class="risk-rule">
-          <div class="risk-rule-icon" style="color:var(--green)">✓</div>
-          <div><strong>1% rule</strong> — Risk no more than 1% per trade to survive drawdowns</div>
-        </div>
-        <div class="risk-rule">
-          <div class="risk-rule-icon" style="color:var(--green)">✓</div>
-          <div><strong>2:1 minimum R/R</strong> — Only take trades where potential reward is at least 2× your risk</div>
-        </div>
-        <div class="risk-rule">
-          <div class="risk-rule-icon" style="color:var(--orange)">⚠</div>
-          <div><strong>5% daily max loss</strong> — Stop trading for the day if you lose 5% of account</div>
-        </div>
-        <div class="risk-rule">
-          <div class="risk-rule-icon" style="color:var(--orange)">⚠</div>
-          <div><strong>Never move your stop</strong> — Set it before entry, respect it always</div>
-        </div>
-      </div>
-    </div>\`;
-}
-
-// ── LEADERBOARD VIEW ──────────────────────────────────────
-function leaderboardView(stats) {
-  const user = getUser() || {};
-  const initial = (user.name || 'U').charAt(0).toUpperCase();
-
-  // ── Composite score: winRate(40pts) + profitFactor(30pts) + relativePnL(30pts) ──
-  function compositeScore(p, allPlayers) {
-    const maxPnL = Math.max(1, ...allPlayers.map(x => x.totalPnL));
-    const pf = p.profitFactor || 1;
-    return (
-      (p.winRate / 100) * 40 +                          // 0-40 pts
-      Math.min(pf / 3, 1) * 30 +                        // 0-30 pts (capped at PF=3)
-      (Math.max(0, p.totalPnL) / maxPnL) * 30           // 0-30 pts
-    );
-  }
-  // Mock leaderboard data (replace with API when available)
-  const rawPlayers = [
-    { name:'Marcus T.',   winRate:73, totalPnL:28400, trades:184, profitFactor:2.8, badge:'🔥' },
-    { name:'Sarah K.',    winRate:68, totalPnL:19200, trades:221, profitFactor:2.4, badge:'⚡' },
-    { name:'Daniel R.',   winRate:65, totalPnL:14800, trades:156, profitFactor:3.1, badge:'💎' },
-    { name:'Alex M.',     winRate:62, totalPnL:11200, trades:98,  profitFactor:1.9, badge:'🌟' },
-    { name:'Jordan C.',   winRate:61, totalPnL:9800,  trades:143, profitFactor:1.7, badge:'' },
-    { name: esc(user.name || 'You'), winRate: parseFloat(stats.winRate)||0, totalPnL: parseFloat(stats.totalPnL)||0, trades: state.trades.length, profitFactor: parseFloat(stats.profitFactor)||1, badge:'👤', isYou:true },
-  ];
-  const leaderData = rawPlayers
-    .map(p => ({ ...p, score: compositeScore(p, rawPlayers) }))
-    .sort((a,b) => b.score - a.score)
-    .map((p,i) => ({...p, rank: i+1}));
-
-  const you = leaderData.find(p => p.isYou);
-
-  return \`
-    <div class="page-header">
-      <h1 class="header">Leaderboard</h1>
-      <span class="lb-beta-tag">Beta</span>
-    </div>
-
-    <!-- Your public card -->
-    <div class="card lb-profile-card">
-      <div class="lb-profile-top">
-        <div class="lb-avatar">\${initial}</div>
-        <div>
-          <div class="lb-profile-name">\${esc(user.name || 'You')}</div>
-          <div class="lb-profile-handle">@\${esc((user.email||'').split('@')[0] || 'trader')}</div>
-        </div>
-        <div class="lb-profile-rank">#\${you ? you.rank : '—'}</div>
-      </div>
-      <div class="lb-profile-stats">
-        <div class="lb-pstat"><div class="lb-pval \${stats.totalPnL>=0?'positive':'negative'}">\${stats.totalPnL>=0?'+':''}\$\${parseFloat(stats.totalPnL).toFixed(0)}</div><div class="lb-plbl">Total P&L</div></div>
-        <div class="lb-pstat"><div class="lb-pval">\${stats.winRate}%</div><div class="lb-plbl">Win Rate</div></div>
-        <div class="lb-pstat"><div class="lb-pval">\${state.trades.length}</div><div class="lb-plbl">Trades</div></div>
-        <div class="lb-pstat"><div class="lb-pval">\${stats.profitFactor}</div><div class="lb-plbl">Prof. Factor</div></div>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button class="btn btn-secondary btn-sm" onclick="toast('Public profile sharing coming soon!','info')">🔗 Share Profile</button>
-        <button class="btn btn-secondary btn-sm" onclick="toast('Profile customization coming soon!','info')">✎ Customize</button>
-      </div>
-    </div>
-
-    <!-- Leaderboard table -->
-    <div class="card" style="margin-top:1.25rem">
-      <div class="card-title">🏆 Top Traders This Month</div>
-      <div class="lb-table">
-        <div class="lb-thead">
-          <div class="lb-th lb-col-rank">Rank</div>
-          <div class="lb-th lb-col-name">Trader</div>
-          <div class="lb-th lb-col-pnl">P&L</div>
-          <div class="lb-th lb-col-wr">Win Rate</div>
-          <div class="lb-th lb-col-score hide-mobile">Score</div>
-        </div>
-        \${leaderData.map(p => \`
-          <div class="lb-row \${p.isYou ? 'lb-row-you' : ''}">
-            <div class="lb-col-rank">
-              \${p.rank <= 3
-                ? \`<span class="lb-medal">\${['🥇','🥈','🥉'][p.rank-1]}</span>\`
-                : \`<span class="lb-rank-num">#\${p.rank}</span>\`
-              }
-            </div>
-            <div class="lb-col-name">
-              <div class="lb-row-avatar">\${p.name.charAt(0)}</div>
-              <div>
-                <div class="lb-row-name">\${p.isYou ? '<strong>You</strong>' : p.name} \${p.badge}</div>
-                \${p.isYou ? '<div class="lb-row-sub" style="color:var(--orange)">Your position</div>' : ''}
-              </div>
-            </div>
-            <div class="lb-col-pnl \${p.totalPnL>=0?'positive':'negative'}">\${p.totalPnL>=0?'+':''}\$\${p.totalPnL.toLocaleString()}</div>
-            <div class="lb-col-wr">\${p.winRate}%</div>
-            <div class="lb-col-tr hide-mobile">\${p.trades}</div>
-          </div>\`).join('')}
-      </div>
-      <div style="text-align:center;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:0.73rem;color:var(--text-muted)">
-        🚧 Live leaderboard with real community data coming soon. Log more trades to climb the ranks!
-      </div>
-    </div>\`;
 }
 
 // ── NAVIGATION ────────────────────────────────────────────
@@ -2079,22 +1272,8 @@ async function doSaveTrade() {
     return;
   }
 
-  // Upload screenshot if one was attached
-  let screenshotUrl = null;
-  if (_ssFile) {
-    try {
-      if (btn) btn.innerHTML = '<span class="spinner"></span> Uploading screenshot…';
-      const up = await api.uploadScreenshot(_ssFile);
-      screenshotUrl = up.url;
-    } catch (err) {
-      // Non-fatal — warn but continue saving the trade
-      toast(`Screenshot upload failed (trade will still be saved): ${err.message}`, 'warn', 4000);
-    }
-  }
-
   try {
     state.syncing = true;
-    if (btn) btn.innerHTML = '<span class="spinner"></span> Saving…';
     const res = await api.createTrade({
       symbol:            sym,
       entry_price:       ep,
@@ -2110,9 +1289,7 @@ async function doSaveTrade() {
       strategy:          document.getElementById('t-strat').value || null,
       notes:             document.getElementById('t-notes').value || null,
       market_conditions: document.getElementById('t-cond').value  || null,
-      screenshot_url:    screenshotUrl || null,
     });
-    _ssFile = null;
     state.trades.unshift(res.data);
     state.syncing = false;
     toast(`${sym} saved — ${Number(res.data.pnl) >= 0 ? '+' : ''}$${Number(res.data.pnl).toFixed(2)}`, 'success');
@@ -2618,3 +1795,744 @@ function toggleMobileMore() {
 
 // ── INIT ──────────────────────────────────────────────────
 init();
+
+// ═══════════════════════════════════════════════════════════════════
+// NEW DASHBOARD — sparklines · sessions · weekly calendar
+// ═══════════════════════════════════════════════════════════════════
+
+// Override the old dashboard() function
+(function() {
+
+// ── Tiny SVG sparkline ────────────────────────────────────────────
+function sparkline(values, color, height) {
+  height = height || 48;
+  if (!values || values.length < 2) {
+    return '<svg width="100%" height="' + height + '"></svg>';
+  }
+  var W = 160, H = height;
+  var min = Math.min.apply(null, values);
+  var max = Math.max.apply(null, values);
+  var range = max - min || 1;
+  var pts = values.map(function(v, i) {
+    var x = (i / (values.length - 1) * W).toFixed(1);
+    var y = (H - 8 - ((v - min) / range) * (H - 16)).toFixed(1);
+    return x + ',' + y;
+  });
+  var linePath = 'M ' + pts.join(' L ');
+  var fillPath = 'M 0,' + H + ' L ' + pts.join(' L ') + ' L ' + W + ',' + H + ' Z';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" preserveAspectRatio="none" style="display:block">'
+    + '<defs><linearGradient id="spk-' + color.replace('#','') + '" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.25"/>'
+    + '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>'
+    + '</linearGradient></defs>'
+    + '<path d="' + fillPath + '" fill="url(#spk-' + color.replace('#','') + ')"/>'
+    + '<path d="' + linePath + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '</svg>';
+}
+
+// ── Build sparkline data from trades ─────────────────────────────
+function buildSparklineData(trades) {
+  var sorted = trades.filter(function(t) { return t.exit_date; })
+    .sort(function(a, b) { return new Date(a.exit_date) - new Date(b.exit_date); });
+
+  var cumPnL = 0, cumPnLSeries = [];
+  var winRateSeries = [], wins = 0;
+  var avgWinSeries = [], totalWinAmt = 0, winCount = 0;
+  var avgLossSeries = [], totalLossAmt = 0, lossCount = 0;
+
+  sorted.forEach(function(t) {
+    var pnl = Number(t.pnl);
+    cumPnL += pnl;
+    cumPnLSeries.push(cumPnL);
+
+    if (pnl > 0) { wins++; totalWinAmt += pnl; winCount++; }
+    if (pnl < 0) { totalLossAmt += Math.abs(pnl); lossCount++; }
+
+    winRateSeries.push(sorted.length > 0 ? (wins / (cumPnLSeries.length)) * 100 : 0);
+    avgWinSeries.push(winCount > 0 ? totalWinAmt / winCount : 0);
+    avgLossSeries.push(lossCount > 0 ? totalLossAmt / lossCount : 0);
+  });
+
+  return { cumPnLSeries, winRateSeries, avgWinSeries, avgLossSeries };
+}
+
+// ── Trading sessions ──────────────────────────────────────────────
+function buildSessionStats(trades) {
+  var sessions = {
+    london:  { name: 'London',   flag: '🇬🇧', tz: 'GMT +0', open: 8,  close: 17 },
+    newYork: { name: 'New York', flag: '🇺🇸', tz: 'GMT +2', open: 13, close: 22 },
+    asia:    { name: 'Asia',     flag: '🔴',  tz: 'GMT +2', open: 0,  close: 9  },
+    outside: { name: 'Outside',  flag: '⏰',  tz: 'No timezone', open: -1, close: -1 },
+  };
+
+  Object.values(sessions).forEach(function(s) {
+    s.trades = 0; s.wins = 0; s.pnl = 0;
+  });
+
+  trades.forEach(function(t) {
+    if (!t.entry_date) { sessions.outside.trades++; if (Number(t.pnl) > 0) sessions.outside.wins++; sessions.outside.pnl += Number(t.pnl); return; }
+    var h = new Date(t.entry_date).getHours();
+    var sess = sessions.outside;
+    if (h >= 8 && h < 17)  sess = sessions.london;
+    else if (h >= 13 && h < 22) sess = sessions.newYork;
+    else if (h < 9 || h >= 23) sess = sessions.asia;
+    sess.trades++;
+    if (Number(t.pnl) > 0) sess.wins++;
+    sess.pnl += Number(t.pnl);
+  });
+
+  return sessions;
+}
+
+// ── Weekly calendar ───────────────────────────────────────────────
+function buildWeeklyCalendar(trades, year, month) {
+  var pnlByDay = {};
+  trades.filter(function(t) {
+    if (!t.exit_date) return false;
+    var d = new Date(t.exit_date);
+    return d.getFullYear() === year && d.getMonth() === month;
+  }).forEach(function(t) {
+    var d = new Date(t.exit_date).getDate();
+    pnlByDay[d] = (pnlByDay[d] || 0) + Number(t.pnl);
+  });
+
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  // Build week buckets (Sun-Sat)
+  var weeks = [];
+  var currentWeek = { days: [], pnl: 0, label: '' };
+  var startDOW = new Date(year, month, 1).getDay();
+
+  // pad start
+  for (var p = 0; p < startDOW; p++) currentWeek.days.push(null);
+
+  for (var day = 1; day <= daysInMonth; day++) {
+    currentWeek.days.push({ day: day, pnl: pnlByDay[day] !== undefined ? pnlByDay[day] : null });
+    if (pnlByDay[day] !== undefined) currentWeek.pnl += pnlByDay[day];
+    var dow = new Date(year, month, day).getDay();
+    if (dow === 6 || day === daysInMonth) {
+      weeks.push(currentWeek);
+      currentWeek = { days: [], pnl: 0, label: '' };
+    }
+  }
+
+  weeks.forEach(function(w, i) { w.label = 'Week ' + (i + 1); });
+  return { weeks: weeks, pnlByDay: pnlByDay };
+}
+
+// ── New dashboard function ────────────────────────────────────────
+window.dashboard = function(s) {
+  var spark = buildSparklineData(state.trades);
+  var sessions = buildSessionStats(state.trades);
+  var now = state.calendarDate;
+  var year = now.getFullYear();
+  var month = now.getMonth();
+  var monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  var cal = buildWeeklyCalendar(state.trades, year, month);
+
+  // Stat cards with sparklines
+  function sparkCard(label, value, colorClass, sparkData, sparkColor, sub) {
+    return '<div class="dash-stat-card">'
+      + '<div class="dash-stat-header">'
+      + '<div class="dash-stat-label">' + label + '</div>'
+      + '</div>'
+      + '<div class="dash-stat-value ' + (colorClass || '') + '">' + value + '</div>'
+      + (sub ? '<div class="dash-stat-sub">' + sub + '</div>' : '')
+      + '<div class="dash-sparkline">'
+      + sparkline(sparkData.length >= 2 ? sparkData : null, sparkColor, 44)
+      + '</div>'
+      + '</div>';
+  }
+
+  // Session card
+  function sessionCard(sess, key) {
+    var wr = sess.trades > 0 ? ((sess.wins / sess.trades) * 100).toFixed(2) : '0.00';
+    var pnlPos = sess.pnl >= 0;
+    return '<div class="session-card">'
+      + '<div class="session-header">'
+      + '<span class="session-flag">' + sess.flag + '</span>'
+      + '<div class="session-name-wrap">'
+      + '<div class="session-name">' + sess.name + '</div>'
+      + '<div class="session-tz">' + sess.tz + '</div>'
+      + '</div>'
+      + (sess.open >= 0 ? '<div class="session-time">' + String(sess.open).padStart(2,'0') + ':01 ' + (sess.open < 12 ? 'AM' : 'PM') + '</div>' : '')
+      + '</div>'
+      + '<div class="session-stats">'
+      + '<div class="session-row">'
+      + '<span class="session-lbl">Profit</span>'
+      + '<span class="session-pnl ' + (pnlPos ? 'positive' : 'negative') + '">'
+      + (pnlPos ? '+' : '') + (sess.pnl * 100 / Math.max(1, Math.abs(sess.pnl) + 0.01)).toFixed(2) + '%'
+      + '</span>'
+      + '</div>'
+      + '<div class="session-bottom">'
+      + '<div><div class="session-stat-lbl">Total Trades</div><div class="session-stat-val">' + sess.trades + '</div></div>'
+      + '<div><div class="session-stat-lbl">Win Rate</div><div class="session-stat-val">' + wr + '%</div></div>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  // Weekly row
+  function weekRow(w, i) {
+    var pnlPos = w.pnl >= 0;
+    var hasData = w.days.some(function(d) { return d && d.pnl !== null; });
+    var cls = 'weekly-row' + (hasData ? (pnlPos ? ' week-profit' : ' week-loss') : '');
+    return '<div class="' + cls + '">'
+      + '<div class="week-label">' + w.label + '</div>'
+      + '<div class="week-pnl ' + (hasData ? (pnlPos ? 'positive' : 'negative') : '') + '">'
+      + (hasData ? (pnlPos ? '+' : '') + '$' + w.pnl.toFixed(2) : '$0.00')
+      + '</div>'
+      + '</div>';
+  }
+
+  // Monthly calendar grid (compact)
+  var dayHeaders = '<div class="mcal-grid">'
+    + ['Su','Mo','Tu','We','Th','Fr','Sa'].map(function(d) {
+        return '<div class="mcal-dh">' + d + '</div>';
+      }).join('');
+  var startDOW2 = new Date(year, month, 1).getDay();
+  var daysInMonth2 = new Date(year, month + 1, 0).getDate();
+  for (var p2 = 0; p2 < startDOW2; p2++) dayHeaders += '<div class="mcal-day empty"></div>';
+  for (var d2 = 1; d2 <= daysInMonth2; d2++) {
+    var pnl2 = cal.pnlByDay[d2];
+    var cls2 = 'mcal-day' + (pnl2 !== undefined ? (pnl2 > 0 ? ' mcal-profit' : pnl2 < 0 ? ' mcal-loss' : ' mcal-be') : '');
+    var ds2 = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d2).padStart(2,'0');
+    dayHeaders += '<div class="' + cls2 + '" onclick="viewCalendarDay(\'' + ds2 + '\')">'
+      + '<div class="mcal-num">' + d2 + '</div>'
+      + (pnl2 !== undefined ? '<div class="mcal-pnl ' + (pnl2 >= 0 ? 'positive' : 'negative') + '">'
+          + (pnl2 >= 0 ? '+' : '') + '$' + Math.abs(pnl2).toFixed(0) + '</div>' : '')
+      + '</div>';
+  }
+  dayHeaders += '</div>';
+
+  return '<div class="page-header">'
+    + '<h1 class="header">Dashboard</h1>'
+    + '<button class="btn btn-primary hide-mobile" onclick="openAddTradeModal()">+ Add Trade</button>'
+    + '</div>'
+
+    // ── Stat cards row ──
+    + '<div class="dash-stats-row">'
+    + sparkCard('NET P&L',
+        (s.totalPnL >= 0 ? '+' : '') + '$' + s.totalPnL.toFixed(2),
+        s.totalPnL >= 0 ? 'positive' : 'negative',
+        spark.cumPnLSeries, s.totalPnL >= 0 ? '#30D158' : '#FF3B30',
+        s.winningTrades + 'W / ' + s.losingTrades + 'L')
+    + sparkCard('Day Win',
+        s.winRate + '%',
+        '',
+        spark.winRateSeries, '#2196F3',
+        s.totalTrades + ' total trades')
+    + sparkCard('AVG Win Trade',
+        '$' + s.avgWin.toFixed(2),
+        'positive',
+        spark.avgWinSeries, '#30D158',
+        'Per winning trade')
+    + sparkCard('AVG Loss Trade',
+        '$' + s.avgLoss.toFixed(2),
+        'negative',
+        spark.avgLossSeries, '#FF3B30',
+        'Per losing trade')
+    + '</div>'
+
+    // ── Sessions ──
+    + '<div class="card dash-section">'
+    + '<div class="dash-section-title">Sessions</div>'
+    + '<div class="sessions-grid">'
+    + sessionCard(sessions.london, 'london')
+    + sessionCard(sessions.newYork, 'newYork')
+    + sessionCard(sessions.asia, 'asia')
+    + sessionCard(sessions.outside, 'outside')
+    + '</div>'
+    + '</div>'
+
+    // ── Weekly + Calendar ──
+    + '<div class="dash-bottom-row">'
+
+    + '<div class="card dash-section dash-weekly">'
+    + '<div class="dash-section-header">'
+    + '<button class="dash-cal-nav" onclick="changeCalendarMonth(-1)">&#8249;</button>'
+    + '<span class="dash-section-title">' + monthName + '</span>'
+    + '<button class="dash-cal-nav" onclick="changeCalendarMonth(1)">&#8250;</button>'
+    + '</div>'
+    + '<div class="weekly-rows">'
+    + cal.weeks.map(weekRow).join('')
+    + '</div>'
+    + '</div>'
+
+    + '<div class="card dash-section dash-cal-section">'
+    + '<div class="mcal-header">'
+    + '<div class="mcal-stat"><div class="mcal-stat-val">' + Object.keys(cal.pnlByDay).length + '</div><div class="mcal-stat-lbl">Trading Days</div></div>'
+    + '<div class="mcal-stat"><div class="mcal-stat-val">' + s.winRate + '%</div><div class="mcal-stat-lbl">Win rate</div></div>'
+    + '</div>'
+    + dayHeaders
+    + '</div>'
+
+    + '</div>' // dash-bottom-row
+
+    // ── Recent trades ──
+    + '<div class="card">'
+    + '<div class="card-title">Recent Trades</div>'
+    + (state.trades.length === 0
+        ? empty('📊', 'No trades yet', 'Click "+ Add Trade" to log your first trade')
+        : state.trades.slice(0, 5).map(function(t) { return tradeCard(t, false); }).join(''))
+    + '</div>';
+};
+
+})(); // end IIFE
+
+// ═══════════════════════════════════════════════════════════════════
+// SCREENSHOT HELPERS
+// ═══════════════════════════════════════════════════════════════════
+var _ssFile = null;
+
+function handleScreenshotDrop(e) {
+  e.preventDefault();
+  var drop = document.getElementById('ss-drop');
+  if (drop) drop.classList.remove('drag-over');
+  var file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) previewScreenshot(file);
+  else toast('Please drop an image file', 'error');
+}
+
+function handleScreenshotFile(e) {
+  var file = e.target.files[0];
+  if (file) previewScreenshot(file);
+}
+
+function previewScreenshot(file) {
+  if (file.size > 5 * 1024 * 1024) { toast('Image must be under 5MB', 'error'); return; }
+  _ssFile = file;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = document.getElementById('ss-preview-img');
+    var wrap = document.getElementById('ss-preview-wrap');
+    var placeholder = document.getElementById('ss-placeholder');
+    if (img) img.src = ev.target.result;
+    if (wrap) wrap.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearScreenshot() {
+  _ssFile = null;
+  var wrap = document.getElementById('ss-preview-wrap');
+  var placeholder = document.getElementById('ss-placeholder');
+  var fileInput = document.getElementById('ss-file');
+  if (wrap) wrap.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'block';
+  if (fileInput) fileInput.value = '';
+}
+
+document.addEventListener('paste', function(e) {
+  if (!state.showTradeModal || state.selectedTrade) return;
+  var items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type.startsWith('image/')) {
+      var file = items[i].getAsFile();
+      if (file) previewScreenshot(file);
+      break;
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════════════════════════════
+function dismissOnboarding() {
+  localStorage.setItem('q_onboarded', '1');
+  state.showOnboarding = false;
+  render();
+}
+
+function nextOnboardingStep() {
+  if (state.onboardingStep < 3) { state.onboardingStep++; render(); }
+  else dismissOnboarding();
+}
+
+function onboardingModal() {
+  var step = state.onboardingStep;
+  var dotHtml = [1,2,3].map(function(i) {
+    var cls = i === step ? 'onboarding-dot active' : (i < step ? 'onboarding-dot done' : 'onboarding-dot');
+    return '<div class="' + cls + '"></div>';
+  }).join('');
+
+  var content = '';
+  var cta = '';
+  var skipBtn = '';
+
+  if (step === 1) {
+    content = '<div class="onboarding-icon"><svg width="52" height="52" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="obl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#obl)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#obl)" opacity="0.12"/><circle cx="16" cy="16" r="2.2" fill="url(#obl)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#obl)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#obl)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#obl)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#obl)"/></svg></div>'
+      + '<h2 class="onboarding-heading">Welcome to Quantario</h2>'
+      + '<div class="onboarding-sub">Your professional trading journal. Let\'s get you set up in 2 minutes.</div>';
+    cta = '<button class="btn btn-primary" style="width:100%" onclick="nextOnboardingStep()">Get Started →</button>';
+    skipBtn = '<button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="dismissOnboarding()">Skip setup</button>';
+  } else if (step === 2) {
+    content = '<div class="onboarding-icon" style="font-size:2.8rem">📊</div>'
+      + '<h2 class="onboarding-heading">How do you want to add trades?</h2>'
+      + '<div class="onboarding-options">'
+      + '<div class="onboarding-option" onclick="changeView(\'import\');dismissOnboarding()">'
+      + '<div class="oo-icon">📁</div><div><div class="oo-title">CSV Import</div><div class="oo-desc">Upload a file from your broker</div></div><div class="oo-arrow">→</div>'
+      + '</div>'
+      + '<div class="onboarding-option" onclick="changeView(\'brokers\');dismissOnboarding()">'
+      + '<div class="oo-icon">🔌</div><div><div class="oo-title">Connect Broker</div><div class="oo-desc">Auto-sync with Alpaca or Binance</div></div><div class="oo-arrow">→</div>'
+      + '</div>'
+      + '<div class="onboarding-option" onclick="openAddTradeModal();dismissOnboarding()">'
+      + '<div class="oo-icon">✏️</div><div><div class="oo-title">Manual Entry</div><div class="oo-desc">Log your first trade now</div></div><div class="oo-arrow">→</div>'
+      + '</div>'
+      + '</div>';
+    skipBtn = '<button class="btn btn-secondary" style="width:100%;margin-top:0.75rem" onclick="nextOnboardingStep()">Skip for now</button>';
+  } else {
+    content = '<div class="onboarding-icon" style="font-size:2.8rem">🎯</div>'
+      + '<h2 class="onboarding-heading">Set your first P&L target</h2>'
+      + '<p style="color:var(--text-secondary);font-size:0.83rem;margin-bottom:1.25rem">Traders with goals outperform those without. Even rough numbers help.</p>'
+      + '<div class="form-group"><label class="form-label">Daily Target ($)</label><input class="form-input" id="ob-daily" placeholder="e.g. 200"></div>'
+      + '<div class="form-group"><label class="form-label">Weekly Target ($)</label><input class="form-input" id="ob-weekly" placeholder="e.g. 1000"></div>'
+      + '<div class="form-group"><label class="form-label">Monthly Target ($)</label><input class="form-input" id="ob-monthly" placeholder="e.g. 4000"></div>';
+    cta = '<button class="btn btn-primary" style="width:100%" onclick="'
+      + 'var d=document.getElementById(\'ob-daily\').value||\'\';\n'
+      + 'var w=document.getElementById(\'ob-weekly\').value||\'\';\n'
+      + 'var m=document.getElementById(\'ob-monthly\').value||\'\';\n'
+      + 'state.goals={daily:d,weekly:w,monthly:m};\n'
+      + 'localStorage.setItem(\'q_goals\',JSON.stringify(state.goals));\n'
+      + 'dismissOnboarding();\n'
+      + '">Save &amp; Start Trading</button>';
+    skipBtn = '<button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="dismissOnboarding()">Skip</button>';
+  }
+
+  return '<div class="modal onboarding-backdrop">'
+    + '<div class="modal-content onboarding-modal" onclick="event.stopPropagation()">'
+    + '<div class="onboarding-dots">' + dotHtml + '</div>'
+    + content
+    + '<div class="onboarding-actions">' + cta + skipBtn + '</div>'
+    + '<button class="onboarding-close" onclick="dismissOnboarding()">&#x2715;</button>'
+    + '</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// GOALS VIEW
+// ═══════════════════════════════════════════════════════════════════
+function goalsView(stats) {
+  var goals = state.goals;
+  var today = new Date().toDateString();
+  var wsStart = new Date();
+  wsStart.setDate(wsStart.getDate() - wsStart.getDay());
+  var msStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+  var todayPnL  = state.trades.filter(function(t) { return t.exit_date && new Date(t.exit_date).toDateString() === today; }).reduce(function(s,t) { return s+Number(t.pnl); }, 0);
+  var weekPnL   = state.trades.filter(function(t) { return t.exit_date && new Date(t.exit_date) >= wsStart; }).reduce(function(s,t) { return s+Number(t.pnl); }, 0);
+  var monthPnL2 = state.trades.filter(function(t) { return t.exit_date && new Date(t.exit_date) >= msStart; }).reduce(function(s,t) { return s+Number(t.pnl); }, 0);
+
+  function goalCard(label, current, target) {
+    var t = parseFloat(target);
+    var hasTarget = !isNaN(t) && t > 0;
+    var pct = hasTarget ? Math.max(0, Math.min(100, (current / t) * 100)) : 0;
+    var reached = hasTarget && current >= t;
+    return '<div class="goal-card' + (reached ? ' goal-reached' : '') + '">'
+      + (reached ? '<div class="goal-badge">✓ Reached!</div>' : '')
+      + '<div class="goal-period">' + label + '</div>'
+      + '<div class="goal-current ' + (current >= 0 ? 'positive' : 'negative') + '">' + (current >= 0 ? '+' : '') + '$' + current.toFixed(2) + '</div>'
+      + (hasTarget
+          ? '<div class="goal-target">Target: $' + t.toFixed(0) + '</div>'
+            + '<div class="progress-bar" style="margin-top:0.75rem"><div class="progress-fill" style="width:' + pct.toFixed(0) + '%"></div></div>'
+            + '<div class="goal-pct">' + pct.toFixed(0) + '% of goal</div>'
+          : '<div class="goal-no-target">No target set</div>')
+      + '</div>';
+  }
+
+  return '<div class="page-header"><h1 class="header">Goals &amp; Targets</h1></div>'
+    + '<div class="goals-grid">'
+    + goalCard('Today', todayPnL, goals.daily)
+    + goalCard('This Week', weekPnL, goals.weekly)
+    + goalCard('This Month', monthPnL2, goals.monthly)
+    + '</div>'
+    + '<div class="card" style="margin-top:1.5rem">'
+    + '<div class="card-title">🎯 Edit Targets</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Daily ($)</label><input class="form-input" id="g-daily" value="' + esc(goals.daily) + '" placeholder="e.g. 200"></div>'
+    + '<div class="form-group"><label class="form-label">Weekly ($)</label><input class="form-input" id="g-weekly" value="' + esc(goals.weekly) + '" placeholder="e.g. 1000"></div>'
+    + '<div class="form-group"><label class="form-label">Monthly ($)</label><input class="form-input" id="g-monthly" value="' + esc(goals.monthly) + '" placeholder="e.g. 4000"></div>'
+    + '</div>'
+    + '<button class="btn btn-primary btn-sm" onclick="saveGoals()">Save Targets</button>'
+    + '</div>';
+}
+
+function saveGoals() {
+  state.goals = {
+    daily:   document.getElementById('g-daily')  ? document.getElementById('g-daily').value  : '',
+    weekly:  document.getElementById('g-weekly') ? document.getElementById('g-weekly').value : '',
+    monthly: document.getElementById('g-monthly')? document.getElementById('g-monthly').value: '',
+  };
+  localStorage.setItem('q_goals', JSON.stringify(state.goals));
+  toast('Goals saved!', 'success');
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RISK CALCULATOR
+// ═══════════════════════════════════════════════════════════════════
+var _rcState = { accountSize:'', riskPct:'1', entryPrice:'', stopLoss:'', takeProfit:'', direction:'long', result:null };
+
+function riskCalcView() {
+  var rc = _rcState;
+  var r = rc.result;
+
+  return '<div class="page-header"><h1 class="header">Risk Calculator</h1></div>'
+    + '<div class="riskcalc-layout">'
+    + '<div class="card riskcalc-inputs">'
+    + '<div class="card-title">⚙️ Position Parameters</div>'
+    + '<div class="form-group"><label class="form-label">Account Size ($) *</label><input type="number" class="form-input" id="rc-acc" placeholder="e.g. 10000" value="' + esc(rc.accountSize) + '"></div>'
+    + '<div class="form-group"><label class="form-label" style="display:flex;justify-content:space-between"><span>Risk Per Trade (%)</span><span class="rc-pct-badge" id="rc-pct-lbl">' + (rc.riskPct||'1') + '%</span></label>'
+    + '<input type="range" class="form-range" id="rc-rpct" min="0.1" max="5" step="0.1" value="' + (rc.riskPct||'1') + '" oninput="document.getElementById(\'rc-pct-lbl\').textContent=this.value+\'%\'">'
+    + '<div class="rc-range-labels"><span>0.1%</span><span>1%</span><span>2%</span><span>3%</span><span>5%</span></div></div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Direction</label><select class="form-select" id="rc-dir"><option value="long"' + (rc.direction==='long'?' selected':'') + '>Long</option><option value="short"' + (rc.direction==='short'?' selected':'') + '>Short</option></select></div>'
+    + '<div class="form-group"><label class="form-label">Entry Price *</label><input type="number" step="any" class="form-input" id="rc-ep" value="' + esc(rc.entryPrice) + '" placeholder="0.00"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Stop Loss *</label><input type="number" step="any" class="form-input" id="rc-sl" value="' + esc(rc.stopLoss) + '" placeholder="0.00"></div>'
+    + '<div class="form-group"><label class="form-label">Take Profit</label><input type="number" step="any" class="form-input" id="rc-tp" value="' + esc(rc.takeProfit||'') + '" placeholder="Optional"></div>'
+    + '</div>'
+    + '<button class="btn btn-primary" style="width:100%" onclick="doRiskCalc()">Calculate</button>'
+    + '</div>'
+    + '<div class="riskcalc-results">'
+    + (r
+      ? '<div class="rc-result-card rc-primary"><div class="rc-result-label">Position Size</div><div class="rc-result-value">' + r.posSize.toFixed(r.posSize < 10 ? 4 : 2) + '</div><div class="rc-result-sub">units / shares</div></div>'
+        + '<div class="rc-result-card"><div class="rc-result-label">Max Risk</div><div class="rc-result-value negative">-$' + r.riskAmt.toFixed(2) + '</div><div class="rc-result-sub">' + rc.riskPct + '% of account</div></div>'
+        + '<div class="rc-result-card"><div class="rc-result-label">Stop Distance</div><div class="rc-result-value">' + r.slDist.toFixed(4) + '</div><div class="rc-result-sub">price points</div></div>'
+        + (r.rr ? '<div class="rc-result-card ' + (parseFloat(r.rr) >= 2 ? 'rc-good' : parseFloat(r.rr) < 1 ? 'rc-bad' : '') + '"><div class="rc-result-label">Risk/Reward</div><div class="rc-result-value">1 : ' + r.rr + '</div><div class="rc-result-sub">' + (parseFloat(r.rr) >= 2 ? '✓ Good' : parseFloat(r.rr) < 1 ? '⚠ Poor' : 'OK') + '</div></div>' : '')
+        + (r.potential ? '<div class="rc-result-card rc-good"><div class="rc-result-label">Potential Profit</div><div class="rc-result-value positive">+$' + r.potential + '</div><div class="rc-result-sub">if TP hit</div></div>' : '')
+      : '<div class="rc-empty"><div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3">🧮</div><div style="font-size:0.9rem;font-weight:700;margin-bottom:0.4rem">Results appear here</div><div style="font-size:0.78rem;color:var(--text-muted)">Fill the form and click Calculate</div></div>'
+    )
+    + '</div>'
+    + '</div>';
+}
+
+function doRiskCalc() {
+  var acc  = parseFloat(document.getElementById('rc-acc') ? document.getElementById('rc-acc').value : 0);
+  var rPct = parseFloat(document.getElementById('rc-rpct') ? document.getElementById('rc-rpct').value : 0);
+  var ep   = parseFloat(document.getElementById('rc-ep') ? document.getElementById('rc-ep').value : 0);
+  var sl   = parseFloat(document.getElementById('rc-sl') ? document.getElementById('rc-sl').value : 0);
+  var tp   = parseFloat(document.getElementById('rc-tp') ? document.getElementById('rc-tp').value : 0) || null;
+  var dir  = document.getElementById('rc-dir') ? document.getElementById('rc-dir').value : 'long';
+
+  _rcState.accountSize = acc; _rcState.riskPct = rPct; _rcState.entryPrice = ep;
+  _rcState.stopLoss = sl; _rcState.takeProfit = tp; _rcState.direction = dir;
+
+  if (!acc || !rPct || !ep || !sl) { toast('Fill in all required fields', 'warn'); return; }
+  var riskAmt = acc * (rPct / 100);
+  var slDist = Math.abs(ep - sl);
+  if (slDist === 0) { toast('Stop loss cannot equal entry', 'error'); return; }
+  var posSize = riskAmt / slDist;
+  var tpDist = tp ? Math.abs(tp - ep) : null;
+  var rr = tpDist ? (tpDist / slDist).toFixed(2) : null;
+  var potential = tpDist ? (posSize * tpDist).toFixed(2) : null;
+  _rcState.result = { riskAmt: riskAmt, slDist: slDist, posSize: posSize, rr: rr, potential: potential };
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════════════════════════════
+function leaderboardView(stats) {
+  var user = getUser() || {};
+  var initial = (user.name || 'U').charAt(0).toUpperCase();
+
+  var rawPlayers = [
+    { name:'Marcus T.',   winRate:73, totalPnL:28400, trades:184, profitFactor:2.8, badge:'🔥' },
+    { name:'Sarah K.',    winRate:68, totalPnL:19200, trades:221, profitFactor:2.4, badge:'⚡' },
+    { name:'Daniel R.',   winRate:65, totalPnL:14800, trades:156, profitFactor:3.1, badge:'💎' },
+    { name:'Alex M.',     winRate:62, totalPnL:11200, trades:98,  profitFactor:1.9, badge:'🌟' },
+    { name:'Jordan C.',   winRate:61, totalPnL:9800,  trades:143, profitFactor:1.7, badge:'' },
+    { name: esc(user.name||'You'), winRate: parseFloat(stats.winRate)||0, totalPnL: parseFloat(stats.totalPnL)||0, trades: state.trades.length, profitFactor: parseFloat(stats.profitFactor)||1, badge:'', isYou:true },
+  ];
+
+  var maxPnL = Math.max.apply(null, rawPlayers.map(function(p) { return Math.max(0, p.totalPnL); })) || 1;
+  var leaderData = rawPlayers.map(function(p) {
+    var score = (p.winRate/100)*40 + Math.min(p.profitFactor/3,1)*30 + (Math.max(0,p.totalPnL)/maxPnL)*30;
+    return Object.assign({}, p, { score: score });
+  }).sort(function(a,b) { return b.score - a.score; }).map(function(p,i) { return Object.assign({}, p, { rank: i+1 }); });
+
+  var you = leaderData.find(function(p) { return p.isYou; });
+
+  var rowsHtml = leaderData.map(function(p) {
+    var medals = ['🥇','🥈','🥉'];
+    return '<div class="lb-row' + (p.isYou ? ' lb-row-you' : '') + '">'
+      + '<div class="lb-col-rank">' + (p.rank <= 3 ? '<span class="lb-medal">' + medals[p.rank-1] + '</span>' : '<span class="lb-rank-num">#' + p.rank + '</span>') + '</div>'
+      + '<div class="lb-col-name"><div class="lb-row-avatar">' + p.name.charAt(0) + '</div><div><div class="lb-row-name">' + (p.isYou ? '<strong>You</strong>' : p.name) + ' ' + p.badge + '</div></div></div>'
+      + '<div class="lb-col-pnl ' + (p.totalPnL >= 0 ? 'positive' : 'negative') + '">' + (p.totalPnL >= 0 ? '+' : '') + '$' + p.totalPnL.toLocaleString() + '</div>'
+      + '<div class="lb-col-wr">' + p.winRate + '%</div>'
+      + '<div class="lb-col-score hide-mobile">' + p.score.toFixed(1) + '</div>'
+      + '</div>';
+  }).join('');
+
+  return '<div class="page-header"><h1 class="header">Leaderboard</h1><span class="lb-beta-tag">Beta</span></div>'
+    + '<div class="card lb-profile-card">'
+    + '<div class="lb-profile-top"><div class="lb-avatar">' + initial + '</div><div><div class="lb-profile-name">' + esc(user.name||'You') + '</div><div class="lb-profile-handle">@' + esc((user.email||'').split('@')[0]||'trader') + '</div></div><div class="lb-profile-rank">#' + (you ? you.rank : '—') + '</div></div>'
+    + '<div class="lb-profile-stats">'
+    + '<div class="lb-pstat"><div class="lb-pval ' + (stats.totalPnL >= 0 ? 'positive' : 'negative') + '">' + (stats.totalPnL >= 0 ? '+' : '') + '$' + parseFloat(stats.totalPnL).toFixed(0) + '</div><div class="lb-plbl">P&L</div></div>'
+    + '<div class="lb-pstat"><div class="lb-pval">' + stats.winRate + '%</div><div class="lb-plbl">Win Rate</div></div>'
+    + '<div class="lb-pstat"><div class="lb-pval">' + state.trades.length + '</div><div class="lb-plbl">Trades</div></div>'
+    + '<div class="lb-pstat"><div class="lb-pval">' + stats.profitFactor + '</div><div class="lb-plbl">Prof. Factor</div></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:0.75rem;margin-top:1rem">'
+    + '<button class="btn btn-secondary btn-sm" onclick="toast(\'Public profile sharing coming soon!\',\'info\')">🔗 Share Profile</button>'
+    + '</div></div>'
+    + '<div class="card" style="margin-top:1.25rem"><div class="card-title">🏆 Top Traders This Month</div>'
+    + '<div class="lb-table">'
+    + '<div class="lb-thead"><div class="lb-th lb-col-rank">Rank</div><div class="lb-th lb-col-name">Trader</div><div class="lb-th lb-col-pnl">P&L</div><div class="lb-th lb-col-wr">Win Rate</div><div class="lb-th lb-col-score hide-mobile">Score</div></div>'
+    + rowsHtml
+    + '</div>'
+    + '<div style="text-align:center;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:0.73rem;color:var(--text-muted)">🚧 Live community leaderboard coming soon</div>'
+    + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ANALYTICS WITH CHARTS
+// ═══════════════════════════════════════════════════════════════════
+(function() {
+  window.analytics = function(s) {
+    var sorted = state.trades.filter(function(t) { return t.exit_date; })
+      .sort(function(a,b) { return new Date(a.exit_date) - new Date(b.exit_date); });
+
+    var cumulative = 0;
+    var equity = sorted.map(function(t) {
+      cumulative += Number(t.pnl);
+      return { date: new Date(t.exit_date), pnl: Number(t.pnl), cum: cumulative };
+    });
+
+    var wins2   = state.trades.filter(function(t) { return Number(t.pnl) > 0; }).length;
+    var losses2 = state.trades.filter(function(t) { return Number(t.pnl) < 0; }).length;
+    var be2     = state.trades.filter(function(t) { return Number(t.pnl) === 0; }).length;
+
+    var byStrategy = state.trades.reduce(function(acc, t) {
+      var k = t.strategy || 'No Strategy';
+      if (!acc[k]) acc[k] = { pnl: 0, count: 0, wins: 0 };
+      acc[k].pnl += Number(t.pnl); acc[k].count++;
+      if (t.pnl > 0) acc[k].wins++;
+      return acc;
+    }, {});
+
+    var byAsset = state.trades.reduce(function(acc, t) {
+      acc[t.asset_type] = (acc[t.asset_type] || 0) + 1;
+      return acc;
+    }, {});
+
+    // SVG equity curve
+    function equityCurve() {
+      if (equity.length < 2) return '<div style="display:flex;align-items:center;justify-content:center;height:160px;color:var(--text-muted);font-size:0.8rem;flex-direction:column;gap:0.5rem"><div style="font-size:2rem;opacity:0.25">📈</div>Log 2+ trades to see equity curve</div>';
+      var W=600,H=160,PL=50,PR=16,PT=12,PB=28;
+      var vals = equity.map(function(p){return p.cum;});
+      var minV = Math.min.apply(null, [0].concat(vals));
+      var maxV = Math.max.apply(null, [0].concat(vals));
+      var range = maxV - minV || 1;
+      var plotW = W-PL-PR, plotH = H-PT-PB;
+      var toX = function(i){ return PL + i/(equity.length-1)*plotW; };
+      var toY = function(v){ return PT + plotH - (v-minV)/range*plotH; };
+      var zeroY = toY(0);
+      var lastVal = equity[equity.length-1].cum;
+      var color = lastVal >= 0 ? 'var(--green)' : 'var(--red)';
+      var pts = equity.map(function(p,i){ return toX(i).toFixed(1)+','+toY(p.cum).toFixed(1); });
+      var linePath = 'M '+pts.join(' L ');
+      var fillPath = 'M '+toX(0).toFixed(1)+','+zeroY.toFixed(1)+' L '+pts.join(' L ')+' L '+toX(equity.length-1).toFixed(1)+','+zeroY.toFixed(1)+' Z';
+      var yLabels = [minV, minV+range*0.5, maxV].map(function(v){return {val:v, y:toY(v)};});
+      var xSamples = [0, Math.floor(equity.length/2), equity.length-1].map(function(i){
+        return { label: equity[i].date.toLocaleDateString('en-US',{month:'short',day:'numeric'}), x: toX(i) };
+      });
+      var gradId = lastVal >= 0 ? 'eq-pos' : 'eq-neg';
+      var gradColor = lastVal >= 0 ? 'rgba(48,209,88,' : 'rgba(255,59,48,';
+      var svg = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:160px;display:block;overflow:visible" preserveAspectRatio="none">';
+      svg += '<defs><linearGradient id="'+gradId+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+gradColor+'0.2)"/><stop offset="100%" stop-color="'+gradColor+'0)"/></linearGradient></defs>';
+      yLabels.forEach(function(l){
+        svg += '<line x1="'+PL+'" y1="'+l.y.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+l.y.toFixed(1)+'" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3,3"/>';
+        svg += '<text x="'+(PL-6)+'" y="'+(l.y+4).toFixed(1)+'" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">'+(l.val>=0?'+':'')+'$'+Math.round(l.val)+'</text>';
+      });
+      svg += '<line x1="'+PL+'" y1="'+zeroY.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+zeroY.toFixed(1)+'" stroke="var(--border-bright)" stroke-width="1"/>';
+      svg += '<path d="'+fillPath+'" fill="url(#'+gradId+')"/>';
+      svg += '<path d="'+linePath+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+      svg += '<circle cx="'+toX(0).toFixed(1)+'" cy="'+toY(equity[0].cum).toFixed(1)+'" r="3.5" fill="'+color+'" opacity="0.6"/>';
+      svg += '<circle cx="'+toX(equity.length-1).toFixed(1)+'" cy="'+toY(lastVal).toFixed(1)+'" r="4.5" fill="'+color+'"/>';
+      xSamples.forEach(function(x){
+        svg += '<text x="'+x.x.toFixed(1)+'" y="'+(H-4)+'" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">'+x.label+'</text>';
+      });
+      svg += '</svg>';
+      return svg;
+    }
+
+    // Donut
+    function donut() {
+      var total = state.trades.length;
+      if (!total) return '<div style="font-size:0.75rem;color:var(--text-muted);text-align:center;padding:2rem">No trades yet</div>';
+      var cx=60,cy=60,r=46,sw=14,circ=2*Math.PI*r;
+      var wArc=circ*(wins2/total), lArc=circ*(losses2/total);
+      var gap = total > 1 ? 2 : 0;
+      return '<svg viewBox="0 0 120 120" width="120" height="120" style="flex-shrink:0">'
+        +'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--bg-overlay)" stroke-width="'+sw+'"/>'
+        +(wins2>0?'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--green)" stroke-width="'+sw+'" stroke-linecap="round" stroke-dasharray="'+(wArc-gap)+' '+(circ-wArc+gap)+'" stroke-dashoffset="'+(circ*0.25)+'" opacity="0.9"/>'  :'')
+        +(losses2>0?'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--red)" stroke-width="'+sw+'" stroke-linecap="round" stroke-dasharray="'+(lArc-gap)+' '+(circ-lArc+gap)+'" stroke-dashoffset="'+(circ*0.25-wArc+gap)+'" opacity="0.9"/>'  :'')
+        +'<text x="'+cx+'" y="'+(cy-6)+'" text-anchor="middle" fill="var(--text-primary)" font-size="14" font-weight="800" font-family="Plus Jakarta Sans,sans-serif">'+total+'</text>'
+        +'<text x="'+cx+'" y="'+(cy+10)+'" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="Plus Jakarta Sans,sans-serif">trades</text>'
+        +'</svg>';
+    }
+
+    // Strategy table
+    var stratRows = Object.entries(byStrategy).sort(function(a,b){return b[1].pnl-a[1].pnl;}).map(function(entry){
+      var k=entry[0], d=entry[1];
+      var allPnl = Object.values(byStrategy).map(function(x){return Math.abs(x.pnl);});
+      var maxPnl2 = Math.max.apply(null, allPnl) || 1;
+      var barW = (Math.abs(d.pnl)/maxPnl2*100).toFixed(1);
+      var wr = ((d.wins/d.count)*100).toFixed(0);
+      return '<div class="strat-row">'
+        +'<div class="strat-td strat-name">'+esc(k)+'</div>'
+        +'<div class="strat-td '+(d.pnl>=0?'positive':'negative')+'">'+(d.pnl>=0?'+':'')+'$'+d.pnl.toFixed(0)+'</div>'
+        +'<div class="strat-td" style="color:var(--text-secondary)">'+d.count+'</div>'
+        +'<div class="strat-td" style="color:var(--text-secondary)">'+wr+'%</div>'
+        +'<div class="strat-td strat-bar-cell"><div class="strat-bar" style="width:'+barW+'%;background:'+(d.pnl>=0?'var(--green)':'var(--red)')+'"></div></div>'
+        +'</div>';
+    }).join('');
+
+    // Asset rows
+    var assetRows = Object.entries(byAsset).sort(function(a,b){return b[1]-a[1];}).map(function(entry){
+      var asset=entry[0], count=entry[1];
+      var pct = ((count/state.trades.length)*100).toFixed(1);
+      return '<div style="margin-bottom:0.85rem">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">'
+        +'<span class="badge badge-'+asset+'">'+asset+'</span>'
+        +'<span style="color:var(--text-secondary);font-size:0.75rem;font-family:\'JetBrains Mono\',monospace">'+count+' · '+pct+'%</span>'
+        +'</div>'
+        +'<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'
+        +'</div>';
+    }).join('');
+
+    return '<div class="page-header"><h1 class="header">Analytics</h1></div>'
+      +'<div class="stats-grid">'
+      +statCard('Total Trades', s.totalTrades, '')
+      +statCard('Win Rate', s.winRate+'%', wins2+'W · '+losses2+'L')
+      +statCard('Profit Factor', s.profitFactor, '')
+      +statCard('Total P&L', (s.totalPnL>=0?'+':'')+'$'+s.totalPnL.toFixed(2), '', s.totalPnL>=0)
+      +'</div>'
+      +'<div class="card"><div class="chart-card-header"><div><div class="card-title">Equity Curve</div><div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.2rem">Cumulative P&L</div></div>'
+      +(equity.length>=2?'<div class="chart-stat-val '+(s.totalPnL>=0?'positive':'negative')+'">'+(s.totalPnL>=0?'+':'')+'$'+s.totalPnL.toFixed(2)+'</div>':'')
+      +'</div><div class="chart-wrap">'+equityCurve()+'</div></div>'
+      +'<div class="charts-row">'
+      +'<div class="card chart-half"><div class="card-title">Win / Loss</div><div class="donut-wrap">'+donut()
+        +'<div class="donut-legend">'
+        +'<div class="donut-leg"><span class="donut-dot" style="background:var(--green)"></span><span class="donut-lbl">Win</span><span class="donut-val">'+wins2+'</span></div>'
+        +'<div class="donut-leg"><span class="donut-dot" style="background:var(--red)"></span><span class="donut-lbl">Loss</span><span class="donut-val">'+losses2+'</span></div>'
+        +'<div class="donut-leg donut-divider"></div>'
+        +'<div class="donut-leg"><span class="donut-lbl">Win Rate</span><span class="donut-val">'+s.winRate+'%</span></div>'
+        +'<div class="donut-leg"><span class="donut-lbl">Avg Win</span><span class="donut-val positive">+$'+s.avgWin.toFixed(0)+'</span></div>'
+        +'<div class="donut-leg"><span class="donut-lbl">Avg Loss</span><span class="donut-val negative">-$'+Math.abs(s.avgLoss).toFixed(0)+'</span></div>'
+        +'</div></div></div>'
+      +'<div class="card chart-half"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center"><span>✨ AI Pattern Insights</span>'
+        +(isPremium()?'<button class="btn btn-ai btn-sm" id="ai-patterns-btn" onclick="doAIPatterns()">'+(state.aiPatterns.loading?'<span class="spinner"></span> Analysing…':state.aiPatterns.ran?'↺ Re-analyse':'Analyse Trades')+'</button>':aiLockedBtn('Analyse Trades'))
+        +'</div>'
+        +(state.aiPatterns.text?'<div class="ai-patterns-output" id="ai-patterns-text">'+esc(state.aiPatterns.text).replace(/\n/g,'<br>')+'</div>'
+          :state.aiPatterns.loading?'<div class="ai-patterns-output" id="ai-patterns-text"><span class="ai-cursor"></span></div>'
+          :'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;color:var(--text-secondary);text-align:center;min-height:120px"><div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.3">'+(isPremium()?'📊':'👑')+'</div><div style="font-size:0.78rem">'+(isPremium()?'Click "Analyse Trades" to find patterns':'Upgrade to unlock AI pattern recognition')+'</div></div>')
+        +'</div>'
+      +'</div>'
+      +(Object.keys(byStrategy).length?'<div class="card"><div class="card-title">Performance by Strategy</div><div class="strategy-table"><div class="strat-thead"><div class="strat-th">Strategy</div><div class="strat-th">P&L</div><div class="strat-th">Trades</div><div class="strat-th">Win %</div><div class="strat-th">Bar</div></div>'+stratRows+'</div></div>':'')
+      +(Object.keys(byAsset).length?'<div class="card"><div class="card-title">Asset Distribution</div>'+assetRows+'</div>':'');
+  };
+})();
