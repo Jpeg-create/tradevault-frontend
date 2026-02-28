@@ -11,15 +11,61 @@
   <style>
     #google-btn-container { display:flex; justify-content:center; min-height:44px; align-items:center; }
     .google-note { font-size:0.72rem; color:var(--text-secondary); text-align:center; margin-top:0.6rem; line-height:1.5; }
-    .auth-token-box { background:var(--bg-base); border:1px solid var(--border-color); border-radius:6px; padding:0.75rem; font-size:0.72rem; word-break:break-all; color:var(--cyan); cursor:pointer; font-family:monospace; margin:0.5rem 0; transition:border-color 0.2s; }
+    .auth-token-box { background:var(--bg-base); border:1px solid var(--border-color); border-radius:6px; padding:0.75rem; font-size:0.72rem; word-break:break-all; color:var(--orange); cursor:pointer; font-family:monospace; margin:0.5rem 0; transition:border-color 0.2s; }
     .auth-token-box:hover { border-color:var(--orange); }
     .password-strength { display:none; margin-top:0.5rem; align-items:center; gap:0.5rem; }
     .pw-bar  { flex:1; height:4px; background:var(--bg-tertiary); border-radius:2px; overflow:hidden; }
     .pw-fill { height:100%; border-radius:2px; transition:width 0.3s, background 0.3s; }
     .pw-label{ font-size:0.72rem; min-width:48px; font-family:'JetBrains Mono',monospace; }
+    /* Auth theme toggle */
+    .auth-theme-btn {
+      position:fixed; top:1.25rem; right:1.25rem; z-index:100;
+      width:36px; height:36px; border-radius:50%; cursor:pointer;
+      background:var(--bg-elevated); border:1px solid var(--border);
+      color:var(--text-secondary); display:flex; align-items:center;
+      justify-content:center; transition:all 0.18s;
+    }
+    .auth-theme-btn:hover { color:var(--orange); border-color:var(--border-orange); background:var(--orange-dim); }
+    [data-theme="light"] .auth-page {
+      background:
+        radial-gradient(ellipse 60% 40% at 20% -5%, rgba(232,80,30,0.05) 0%, transparent 55%),
+        radial-gradient(ellipse 45% 35% at 85% 105%, rgba(217,36,90,0.03) 0%, transparent 55%),
+        #FFFCFB;
+    }
+    [data-theme="light"] .auth-box {
+      background:#FFFFFF;
+      border-color:rgba(0,0,0,0.09);
+      box-shadow:0 8px 48px rgba(0,0,0,0.09),0 0 60px rgba(232,80,30,0.03);
+    }
+    [data-theme="light"] .auth-tabs { background:#F2EDE9; border-color:rgba(0,0,0,0.09); }
+    [data-theme="light"] .google-btn { background:#F7F2EF; border-color:rgba(0,0,0,0.09); }
+    [data-theme="light"] .google-btn:hover { background:#F0EBE7; }
+    [data-theme="light"] .auth-alert.success { background:rgba(232,80,30,0.06); border-color:rgba(232,80,30,0.14); color:#C85C1A; }
+    [data-theme="light"] .wake-banner { background:rgba(196,123,10,0.07); }
+    [data-theme="light"] .pw-bar { background:rgba(0,0,0,0.07); }
   </style>
+  <script>
+    // Apply saved theme immediately (avoids flash)
+    (function(){
+      const t = localStorage.getItem('q_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 </head>
 <body class="auth-page">
+  <!-- Theme toggle -->
+  <button class="auth-theme-btn" id="auth-theme-btn" onclick="(function(){
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    const nxt = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nxt);
+    localStorage.setItem('q_theme', nxt);
+    const btn = document.getElementById('auth-theme-btn');
+    btn.innerHTML = nxt === 'dark'
+      ? '<svg width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'5\'/><line x1=\'12\' y1=\'1\' x2=\'12\' y2=\'3\'/><line x1=\'12\' y1=\'21\' x2=\'12\' y2=\'23\'/><line x1=\'4.22\' y1=\'4.22\' x2=\'5.64\' y2=\'5.64\'/><line x1=\'18.36\' y1=\'18.36\' x2=\'19.78\' y2=\'19.78\'/><line x1=\'1\' y1=\'12\' x2=\'3\' y2=\'12\'/><line x1=\'21\' y1=\'12\' x2=\'23\' y2=\'12\'/><line x1=\'4.22\' y1=\'19.78\' x2=\'5.64\' y2=\'18.36\'/><line x1=\'18.36\' y1=\'5.64\' x2=\'19.78\' y2=\'4.22\'/></svg>'
+      : '<svg width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\'/></svg>';
+  })()" title="Toggle theme" aria-label="Toggle light/dark mode">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  </button>
   <div class="auth-box">
 
     <div class="auth-header">

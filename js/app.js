@@ -16,11 +16,37 @@ let state = {
   showTradeModal: false, selectedTrade: null,
   showProfileModal: false,
   csvParsed: null, csvImporting: false, csvProgress: 0,
+  theme: localStorage.getItem('q_theme') || 'dark',
   // ── AI ──
   aiDebrief:  { loading: false, text: '', error: null, tradeId: null },
   aiPatterns: { loading: false, text: '', error: null, ran: false },
   showUpgradeModal: false,
+  showOnboarding: !localStorage.getItem('q_onboarded'),
+  onboardingStep: 1,
+  // Goals
+  goals: JSON.parse(localStorage.getItem('q_goals') || 'null') || { daily: '', weekly: '', monthly: '' },
+  // Risk Calculator
+  riskCalc: { accountSize: '', riskPct: '1', entryPrice: '', stopLoss: '', direction: 'long', result: null },
 };
+
+// Apply theme on load — set on both html and body
+(function() {
+  const t = localStorage.getItem('q_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  if (document.body) document.body.setAttribute('data-theme', t);
+})();
+
+function toggleTheme() {
+  const next = state.theme === 'dark' ? 'light' : 'dark';
+  state.theme = next;
+  localStorage.setItem('q_theme', next);
+  document.documentElement.setAttribute('data-theme', next);
+  document.body.setAttribute('data-theme', next);
+  // Update PWA theme-color meta
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.content = next === 'dark' ? '#FF6535' : '#FFFCFB';
+  render();
+}
 
 // ── TOAST ─────────────────────────────────────────────────
 function toast(message, type = 'info', duration = 3500) {
@@ -227,7 +253,10 @@ const NAV_ICONS = {
   journal:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
   import:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
   brokers:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
-  profile:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  profile:     `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  goals:       `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+  riskcalc:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/><line x1="8" y1="6" x2="16" y2="6"/></svg>`,
+  leaderboard: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="12" width="6" height="10"/><rect x="9" y="7" width="6" height="15"/><rect x="16" y="3" width="6" height="19"/></svg>`,
 };
 
 // Bottom nav tabs shown on mobile (most used 5)
@@ -244,7 +273,7 @@ function render() {
       <!-- ── DESKTOP SIDEBAR ─── -->
       <div class="sidebar">
         <div class="logo">
-          <div class="logo-icon"><svg width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogo" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><rect x="1" y="1" width="38" height="38" rx="10" fill="rgba(0,212,255,0.07)" stroke="url(#qlogo)" stroke-width="1.5"/><path d="M8 29 L15 20 L21 24 L32 12" stroke="url(#qlogo)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="8" cy="29" r="2.5" fill="#00d4ff"/><circle cx="15" cy="20" r="2" fill="url(#qlogo)"/><circle cx="21" cy="24" r="2" fill="url(#qlogo)"/><circle cx="32" cy="12" r="2.5" fill="#a3e635"/><rect x="7" y="32" width="4" height="5" rx="1" fill="rgba(0,212,255,0.28)"/><rect x="14" y="28" width="4" height="9" rx="1" fill="rgba(0,212,255,0.18)"/><rect x="21" y="30" width="4" height="7" rx="1" fill="rgba(163,230,53,0.18)"/><rect x="30" y="26" width="4" height="11" rx="1" fill="rgba(163,230,53,0.28)"/></svg></div>
+          <div class="logo-icon"><svg width="34" height="34" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogo" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#qlogo)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#qlogo)" opacity="0.12"/><circle cx="16" cy="16" r="2.2" fill="url(#qlogo)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#qlogo)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#qlogo)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#qlogo)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#qlogo)"/></svg></div>
           <div class="logo-text">Quan<span>tario</span></div>
         </div>
         <nav style="flex:1">
@@ -255,9 +284,13 @@ function render() {
           <button class="nav-item ${state.currentView === 'analytics' ? 'active' : ''}" onclick="changeView('analytics')"><span class="nav-icon">${NAV_ICONS.analytics}</span>Analytics</button>
           <button class="nav-item ${state.currentView === 'calendar'  ? 'active' : ''}" onclick="changeView('calendar') "><span class="nav-icon">${NAV_ICONS.calendar}</span>Calendar</button>
           <div class="nav-section-label">TOOLS</div>
-          <button class="nav-item ${state.currentView === 'journal'   ? 'active' : ''}" onclick="changeView('journal')  "><span class="nav-icon">${NAV_ICONS.journal}</span>Journal</button>
-          <button class="nav-item ${state.currentView === 'import'    ? 'active' : ''}" onclick="changeView('import')   "><span class="nav-icon">${NAV_ICONS.import}</span>Import</button>
-          <button class="nav-item ${state.currentView === 'brokers'   ? 'active' : ''}" onclick="changeView('brokers')  "><span class="nav-icon">${NAV_ICONS.brokers}</span>Brokers</button>
+          <button class="nav-item ${state.currentView === 'journal'     ? 'active' : ''}" onclick="changeView('journal')    "><span class="nav-icon">${NAV_ICONS.journal}</span>Journal</button>
+          <button class="nav-item ${state.currentView === 'import'      ? 'active' : ''}" onclick="changeView('import')     "><span class="nav-icon">${NAV_ICONS.import}</span>Import</button>
+          <button class="nav-item ${state.currentView === 'brokers'     ? 'active' : ''}" onclick="changeView('brokers')    "><span class="nav-icon">${NAV_ICONS.brokers}</span>Brokers</button>
+          <div class="nav-section-label">MORE</div>
+          <button class="nav-item ${state.currentView === 'goals'       ? 'active' : ''}" onclick="changeView('goals')      "><span class="nav-icon">${NAV_ICONS.goals}</span>Goals</button>
+          <button class="nav-item ${state.currentView === 'riskcalc'    ? 'active' : ''}" onclick="changeView('riskcalc')   "><span class="nav-icon">${NAV_ICONS.riskcalc}</span>Risk Calc</button>
+          <button class="nav-item ${state.currentView === 'leaderboard' ? 'active' : ''}" onclick="changeView('leaderboard')"><span class="nav-icon">${NAV_ICONS.leaderboard}</span>Leaderboard</button>
         </nav>
         <div class="sidebar-footer">
           <button class="sidebar-profile-btn" onclick="openProfileModal()">
@@ -267,6 +300,12 @@ function render() {
               <div class="sidebar-user-label">${esc(user.email || '')}</div>
             </div>
             <span class="sidebar-profile-icon">${NAV_ICONS.profile}</span>
+          </button>
+          <button class="btn btn-theme-toggle btn-sm" style="width:100%;margin-top:0.5rem" onclick="toggleTheme()">
+            ${state.theme === 'dark'
+              ? \`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light Mode\`
+              : \`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark Mode\`
+            }
           </button>
           <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:0.5rem" onclick="handleLogout()">Logout</button>
           <div class="sync-status">
@@ -281,10 +320,16 @@ function render() {
         <!-- Mobile top bar -->
         <div class="mobile-topbar">
           <div class="logo" style="margin-bottom:0">
-            <div class="logo-icon" style="width:22px;height:22px"><svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><rect x="1" y="1" width="38" height="38" rx="10" fill="rgba(0,212,255,0.07)" stroke="url(#qlogot)" stroke-width="1.5"/><path d="M8 29 L15 20 L21 24 L32 12" stroke="url(#qlogot)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="8" cy="29" r="2.5" fill="#00d4ff"/><circle cx="15" cy="20" r="2" fill="url(#qlogot)"/><circle cx="21" cy="24" r="2" fill="url(#qlogot)"/><circle cx="32" cy="12" r="2.5" fill="#a3e635"/><rect x="7" y="32" width="4" height="5" rx="1" fill="rgba(0,212,255,0.28)"/><rect x="14" y="28" width="4" height="9" rx="1" fill="rgba(0,212,255,0.18)"/><rect x="21" y="30" width="4" height="7" rx="1" fill="rgba(163,230,53,0.18)"/><rect x="30" y="26" width="4" height="11" rx="1" fill="rgba(163,230,53,0.28)"/></svg></div>
+            <div class="logo-icon" style="width:22px;height:22px"><svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#qlogot)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#qlogot)" opacity="0.12"/><circle cx="16" cy="16" r="2.2" fill="url(#qlogot)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#qlogot)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#qlogot)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#qlogot)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#qlogot)"/></svg></div>
             <div class="logo-text" style="font-size:0.9rem">Quan<span>tario</span></div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem">
+            <button class="btn-icon-theme" onclick="toggleTheme()" title="Toggle theme">
+              ${state.theme === 'dark'
+                ? \`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>\`
+                : \`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>\`
+              }
+            </button>
             <div class="sync-dot ${state.syncing ? 'syncing' : ''}" style="width:8px;height:8px"></div>
             <button class="mobile-avatar" onclick="openProfileModal()">${esc((user.name||'U').charAt(0).toUpperCase())}</button>
           </div>
@@ -302,7 +347,7 @@ function render() {
           ${NAV_ICONS.trades}<span>Trades</span>
         </button>
         <button class="bottom-nav-fab" onclick="openAddTradeModal()">
-          <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><rect x="1" y="1" width="38" height="38" rx="10" fill="rgba(0,212,255,0.07)" stroke="url(#qlogot)" stroke-width="1.5"/><path d="M8 29 L15 20 L21 24 L32 12" stroke="url(#qlogot)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="8" cy="29" r="2.5" fill="#00d4ff"/><circle cx="15" cy="20" r="2" fill="url(#qlogot)"/><circle cx="21" cy="24" r="2" fill="url(#qlogot)"/><circle cx="32" cy="12" r="2.5" fill="#a3e635"/><rect x="7" y="32" width="4" height="5" rx="1" fill="rgba(0,212,255,0.28)"/><rect x="14" y="28" width="4" height="9" rx="1" fill="rgba(0,212,255,0.18)"/><rect x="21" y="30" width="4" height="7" rx="1" fill="rgba(163,230,53,0.18)"/><rect x="30" y="26" width="4" height="11" rx="1" fill="rgba(163,230,53,0.28)"/></svg>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#qlogot)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#qlogot)" opacity="0.12"/><circle cx="16" cy="16" r="2.2" fill="url(#qlogot)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#qlogot)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#qlogot)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#qlogot)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#qlogot)"/></svg>
         </button>
         <button class="bottom-nav-item ${state.currentView === 'analytics' ? 'active' : ''}" onclick="changeView('analytics')">
           ${NAV_ICONS.analytics}<span>Stats</span>
@@ -316,20 +361,24 @@ function render() {
       ${state.showTradeModal   ? tradeModal()   : ''}
       ${state.showProfileModal ? profileModal() : ''}
       ${state.showUpgradeModal ? upgradeModal() : ''}
+      ${state.showOnboarding && !state.loading  ? onboardingModal() : ''}
     </div>
   `;
 }
 
 function renderView(stats) {
   switch (state.currentView) {
-    case 'dashboard':  return dashboard(stats);
-    case 'trades':     return tradesView();
-    case 'analytics':  return analytics(stats);
-    case 'calendar':   return calendar();
-    case 'journal':    return journal();
-    case 'import':     return importView();
-    case 'brokers':    return brokers();
-    default:           return dashboard(stats);
+    case 'dashboard':   return dashboard(stats);
+    case 'trades':      return tradesView();
+    case 'analytics':   return analytics(stats);
+    case 'calendar':    return calendar();
+    case 'journal':     return journal();
+    case 'import':      return importView();
+    case 'brokers':     return brokers();
+    case 'goals':       return goalsView(stats);
+    case 'riskcalc':    return riskCalcView();
+    case 'leaderboard': return leaderboardView(stats);
+    default:            return dashboard(stats);
   }
 }
 
@@ -423,7 +472,7 @@ function tradeCard(t, showDelete = false) {
   const ep  = Number(t.entry_price);
   const xp  = Number(t.exit_price);
   const dec = ep < 10 ? 4 : 2;
-  const pnlColor = pnl >= 0 ? 'var(--cyan)' : 'var(--red)';
+  const pnlColor = pnl >= 0 ? 'var(--orange)' : 'var(--red)';
   return `
     <div class="trade-item" onclick="viewTrade('${esc(t.id)}')">
       <div class="trade-header">
@@ -457,6 +506,31 @@ function tradeCard(t, showDelete = false) {
 
 // ── ANALYTICS ─────────────────────────────────────────────
 function analytics(s) {
+  // ── Build equity curve data ──────────────────────────────
+  const sorted = [...state.trades]
+    .filter(t => t.exit_date)
+    .sort((a, b) => new Date(a.exit_date) - new Date(b.exit_date));
+
+  let cumulative = 0;
+  const equity = sorted.map(t => {
+    cumulative += Number(t.pnl);
+    return { date: new Date(t.exit_date), pnl: Number(t.pnl), cum: cumulative };
+  });
+
+  // ── Daily P&L bar data ───────────────────────────────────
+  const dailyMap = {};
+  sorted.forEach(t => {
+    const key = new Date(t.exit_date).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    dailyMap[key] = (dailyMap[key] || 0) + Number(t.pnl);
+  });
+  const dailyBars = Object.entries(dailyMap).slice(-20); // last 20 trading days
+
+  // ── Win/Loss donut data ──────────────────────────────────
+  const wins   = state.trades.filter(t => Number(t.pnl) > 0).length;
+  const losses = state.trades.filter(t => Number(t.pnl) < 0).length;
+  const be     = state.trades.filter(t => Number(t.pnl) === 0).length;
+
+  // ── Strategy breakdown ───────────────────────────────────
   const byStrategy = state.trades.reduce((acc, t) => {
     const k = t.strategy || 'No Strategy';
     if (!acc[k]) acc[k] = { pnl: 0, count: 0, wins: 0 };
@@ -471,76 +545,273 @@ function analytics(s) {
     return acc;
   }, {});
 
+  // ── SVG equity curve ─────────────────────────────────────
+  function equityCurve() {
+    if (equity.length < 2) return `
+      <div style="display:flex;align-items:center;justify-content:center;height:180px;color:var(--text-muted);font-size:0.8rem;flex-direction:column;gap:0.5rem">
+        <div style="font-size:2rem;opacity:0.25">📈</div>Log at least 2 trades to see your equity curve
+      </div>`;
+
+    const W = 600, H = 160, PAD = { t: 12, r: 16, b: 28, l: 50 };
+    const minV = Math.min(0, ...equity.map(p => p.cum));
+    const maxV = Math.max(0, ...equity.map(p => p.cum));
+    const range = maxV - minV || 1;
+    const plotW = W - PAD.l - PAD.r;
+    const plotH = H - PAD.t - PAD.b;
+
+    const toX = i => PAD.l + (i / (equity.length - 1)) * plotW;
+    const toY = v => PAD.t + plotH - ((v - minV) / range) * plotH;
+
+    const zeroY = toY(0);
+
+    // Build SVG path
+    const pts = equity.map((p, i) => `${toX(i).toFixed(1)},${toY(p.cum).toFixed(1)}`);
+    const linePath = `M ${pts.join(' L ')}`;
+    // Fill path (close to zero line)
+    const fillPath = `M ${toX(0).toFixed(1)},${zeroY.toFixed(1)} L ${pts.join(' L ')} L ${toX(equity.length-1).toFixed(1)},${zeroY.toFixed(1)} Z`;
+
+    const lastVal = equity[equity.length - 1].cum;
+    const color = lastVal >= 0 ? 'var(--green)' : 'var(--red)';
+    const fillColor = lastVal >= 0 ? 'rgba(48,209,88,0.12)' : 'rgba(255,59,48,0.10)';
+
+    // Y axis labels
+    const yLabels = [minV, minV + range * 0.5, maxV].map(v => ({
+      val: v, y: toY(v)
+    }));
+
+    // X axis: show first, middle, last date label
+    const xSamples = [0, Math.floor(equity.length/2), equity.length-1].map(i => ({
+      label: equity[i].date.toLocaleDateString('en-US', { month:'short', day:'numeric' }),
+      x: toX(i)
+    }));
+
+    return `
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:180px;display:block;overflow:visible" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="eq-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${lastVal >= 0 ? 'rgba(48,209,88,0.22)' : 'rgba(255,59,48,0.18)'}"/>
+            <stop offset="100%" stop-color="${lastVal >= 0 ? 'rgba(48,209,88,0)' : 'rgba(255,59,48,0)'}"/>
+          </linearGradient>
+        </defs>
+        <!-- Grid lines -->
+        ${yLabels.map(l => `
+          <line x1="${PAD.l}" y1="${l.y.toFixed(1)}" x2="${W-PAD.r}" y2="${l.y.toFixed(1)}"
+            stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3,3"/>
+          <text x="${PAD.l - 6}" y="${(l.y + 4).toFixed(1)}" text-anchor="end"
+            fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">
+            ${l.val >= 0 ? '+' : ''}$${Math.round(l.val)}
+          </text>`).join('')}
+        <!-- Zero baseline -->
+        <line x1="${PAD.l}" y1="${zeroY.toFixed(1)}" x2="${W-PAD.r}" y2="${zeroY.toFixed(1)}"
+          stroke="var(--border-bright)" stroke-width="1"/>
+        <!-- Fill -->
+        <path d="${fillPath}" fill="url(#eq-fill)"/>
+        <!-- Line -->
+        <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Dots: first, last -->
+        <circle cx="${toX(0).toFixed(1)}" cy="${toY(equity[0].cum).toFixed(1)}" r="3.5" fill="${color}" opacity="0.6"/>
+        <circle cx="${toX(equity.length-1).toFixed(1)}" cy="${toY(lastVal).toFixed(1)}" r="4.5" fill="${color}"/>
+        <!-- X axis labels -->
+        ${xSamples.map(s => `
+          <text x="${s.x.toFixed(1)}" y="${(H - 4).toFixed(1)}" text-anchor="middle"
+            fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">${s.label}</text>`).join('')}
+      </svg>`;
+  }
+
+  // ── Daily bars ────────────────────────────────────────────
+  function dailyBarsChart() {
+    if (!dailyBars.length) return `
+      <div style="display:flex;align-items:center;justify-content:center;height:140px;color:var(--text-muted);font-size:0.8rem">No daily data yet</div>`;
+
+    const W = 600, H = 140, PAD = { t: 8, r: 8, b: 32, l: 50 };
+    const vals = dailyBars.map(d => d[1]);
+    const maxAbs = Math.max(1, ...vals.map(v => Math.abs(v)));
+    const plotW = W - PAD.l - PAD.r;
+    const plotH = H - PAD.t - PAD.b;
+    const barW = Math.max(4, plotW / dailyBars.length * 0.6);
+    const gap  = plotW / dailyBars.length;
+    const zeroY = PAD.t + plotH / 2;
+
+    return `
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:140px;display:block;overflow:visible" preserveAspectRatio="none">
+        <!-- Zero line -->
+        <line x1="${PAD.l}" y1="${zeroY}" x2="${W-PAD.r}" y2="${zeroY}"
+          stroke="var(--border-bright)" stroke-width="1"/>
+        <!-- Y labels -->
+        <text x="${PAD.l-6}" y="${PAD.t+4}" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">+$${Math.round(maxAbs)}</text>
+        <text x="${PAD.l-6}" y="${H-PAD.b+4}" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono,monospace">-$${Math.round(maxAbs)}</text>
+        <!-- Bars -->
+        ${dailyBars.map(([label, val], i) => {
+          const x = PAD.l + i * gap + gap/2 - barW/2;
+          const barH = Math.max(2, (Math.abs(val) / maxAbs) * (plotH / 2));
+          const y = val >= 0 ? zeroY - barH : zeroY;
+          const color = val >= 0 ? 'var(--green)' : 'var(--red)';
+          const showLabel = i === 0 || i === Math.floor(dailyBars.length/2) || i === dailyBars.length-1;
+          return `
+            <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${barH.toFixed(1)}"
+              rx="2" fill="${color}" opacity="0.85"/>
+            ${showLabel ? `<text x="${(x + barW/2).toFixed(1)}" y="${(H-2).toFixed(1)}" text-anchor="middle"
+              fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono,monospace">${label}</text>` : ''}`;
+        }).join('')}
+      </svg>`;
+  }
+
+  // ── Win/Loss donut ─────────────────────────────────────────
+  function donutChart(wins, losses, be, total) {
+    if (!total) return `<div style="font-size:0.75rem;color:var(--text-muted);text-align:center;padding:2rem">No trades</div>`;
+    const cx=60, cy=60, r=46, sw=14;
+    const circ = 2 * Math.PI * r;
+    const wPct = wins/total, lPct = losses/total, bPct = be/total;
+
+    // Donut segments: start at top (-90deg)
+    const wArc = circ * wPct, lArc = circ * lPct, bArc = circ * bPct;
+    const gap = total > 1 ? 2 : 0;
+
+    return `
+      <svg viewBox="0 0 120 120" width="120" height="120" style="flex-shrink:0">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg-overlay)" stroke-width="${sw}"/>
+        ${wins > 0 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--green)"
+          stroke-width="${sw}" stroke-linecap="round"
+          stroke-dasharray="${wArc - gap} ${circ - wArc + gap}"
+          stroke-dashoffset="${circ * 0.25}" opacity="0.9"/>` : ''}
+        ${losses > 0 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--red)"
+          stroke-width="${sw}" stroke-linecap="round"
+          stroke-dasharray="${lArc - gap} ${circ - lArc + gap}"
+          stroke-dashoffset="${circ * 0.25 - wArc + gap}" opacity="0.9"/>` : ''}
+        ${be > 0 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--amber)"
+          stroke-width="${sw}"
+          stroke-dasharray="${bArc - gap} ${circ - bArc + gap}"
+          stroke-dashoffset="${circ * 0.25 - wArc - lArc + gap*2}" opacity="0.8"/>` : ''}
+        <text x="${cx}" y="${cy - 6}" text-anchor="middle" fill="var(--text-primary)"
+          font-size="14" font-weight="800" font-family="Plus Jakarta Sans,sans-serif">${total}</text>
+        <text x="${cx}" y="${cy + 10}" text-anchor="middle" fill="var(--text-muted)"
+          font-size="8" font-family="Plus Jakarta Sans,sans-serif">trades</text>
+      </svg>`;
+  }
+
   return `
     <div class="page-header"><h1 class="header">Analytics</h1></div>
     <div class="stats-grid">
       ${statCard('Total Trades', s.totalTrades, '')}
-      ${statCard('Win Rate', `${s.winRate}%`, '')}
+      ${statCard('Win Rate', `${s.winRate}%`, `${wins}W · ${losses}L`)}
       ${statCard('Profit Factor', s.profitFactor, '')}
       ${statCard('Total P&L', `${s.totalPnL >= 0 ? '+' : ''}$${s.totalPnL.toFixed(2)}`, '', s.totalPnL >= 0)}
     </div>
 
-    <!-- ── AI INSIGHTS ── -->
+    <!-- ── EQUITY CURVE ── -->
     <div class="card">
-      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
-        <span>✨ AI Pattern Insights</span>
-        ${isPremium()
-          ? `<button class="btn btn-ai btn-sm" id="ai-patterns-btn" onclick="doAIPatterns()">
-               ${state.aiPatterns.loading
-                 ? '<span class="spinner"></span> Analysing…'
-                 : state.aiPatterns.ran ? '↺ Re-analyse' : 'Analyse My Trades'}
-             </button>`
-          : aiLockedBtn('Analyse My Trades')}
+      <div class="chart-card-header">
+        <div>
+          <div class="card-title">Equity Curve</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.2rem">Cumulative P&L over all trades</div>
+        </div>
+        ${equity.length >= 2 ? `
+          <div style="text-align:right">
+            <div class="chart-stat-val ${s.totalPnL >= 0 ? 'positive' : 'negative'}">${s.totalPnL >= 0 ? '+' : ''}$${s.totalPnL.toFixed(2)}</div>
+            <div style="font-size:0.65rem;color:var(--text-muted)">all time</div>
+          </div>` : ''}
       </div>
-      ${state.aiPatterns.text
-        ? `<div class="ai-patterns-output" id="ai-patterns-text">${esc(state.aiPatterns.text).replace(/\n/g,'<br>')}</div>`
-        : state.aiPatterns.loading
-          ? `<div class="ai-patterns-output" id="ai-patterns-text"><span class="ai-cursor"></span></div>`
-          : `<div class="ai-patterns-placeholder">
-               ${isPremium()
-                 ? `<div style="text-align:center;padding:2rem 1rem;color:var(--text-secondary)">
-                      <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.4">📊</div>
-                      <div style="font-size:0.85rem">Click "Analyse My Trades" to find hidden patterns in your data</div>
-                    </div>`
-                 : `<div style="text-align:center;padding:2rem 1rem;color:var(--text-secondary)">
-                      <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.4">👑</div>
-                      <div style="font-size:0.85rem">Upgrade to Premium to unlock AI pattern recognition</div>
-                    </div>`}
-             </div>`
-      }
+      <div class="chart-wrap">${equityCurve()}</div>
     </div>
+
+    <!-- ── DAILY P&L BARS ── -->
+    <div class="card">
+      <div class="chart-card-header">
+        <div>
+          <div class="card-title">Daily P&L</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.2rem">Last ${Math.min(20, dailyBars.length)} trading days</div>
+        </div>
+      </div>
+      <div class="chart-wrap">${dailyBarsChart()}</div>
+    </div>
+
+    <!-- ── WIN/LOSS + AI ── -->
+    <div class="charts-row">
+      <div class="card chart-half">
+        <div class="card-title">Win / Loss Breakdown</div>
+        <div class="donut-wrap">
+          ${donutChart(wins, losses, be, state.trades.length)}
+          <div class="donut-legend">
+            <div class="donut-leg"><span class="donut-dot" style="background:var(--green)"></span><span class="donut-lbl">Win</span><span class="donut-val">${wins}</span></div>
+            <div class="donut-leg"><span class="donut-dot" style="background:var(--red)"></span><span class="donut-lbl">Loss</span><span class="donut-val">${losses}</span></div>
+            ${be > 0 ? `<div class="donut-leg"><span class="donut-dot" style="background:var(--amber)"></span><span class="donut-lbl">B/E</span><span class="donut-val">${be}</span></div>` : ''}
+            <div class="donut-leg donut-divider"></div>
+            <div class="donut-leg"><span class="donut-dot" style="background:var(--orange)"></span><span class="donut-lbl">Win Rate</span><span class="donut-val">${s.winRate}%</span></div>
+            <div class="donut-leg"><span class="donut-lbl">Avg Win</span><span class="donut-val positive">+$${s.avgWin.toFixed(0)}</span></div>
+            <div class="donut-leg"><span class="donut-lbl">Avg Loss</span><span class="donut-val negative">-$${Math.abs(s.avgLoss).toFixed(0)}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card chart-half">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+          <span>✨ AI Pattern Insights</span>
+          ${isPremium()
+            ? `<button class="btn btn-ai btn-sm" id="ai-patterns-btn" onclick="doAIPatterns()">
+                 ${state.aiPatterns.loading
+                   ? '<span class="spinner"></span> Analysing…'
+                   : state.aiPatterns.ran ? '↺ Re-analyse' : 'Analyse Trades'}
+               </button>`
+            : aiLockedBtn('Analyse Trades')}
+        </div>
+        ${state.aiPatterns.text
+          ? `<div class="ai-patterns-output" id="ai-patterns-text">${esc(state.aiPatterns.text).replace(/\n/g,'<br>')}</div>`
+          : state.aiPatterns.loading
+            ? `<div class="ai-patterns-output" id="ai-patterns-text"><span class="ai-cursor"></span></div>`
+            : `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;color:var(--text-secondary);text-align:center;height:100%;min-height:120px">
+                 <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.3">${isPremium() ? '📊' : '👑'}</div>
+                 <div style="font-size:0.78rem">${isPremium() ? 'Click "Analyse Trades" to find hidden patterns' : 'Upgrade to unlock AI pattern recognition'}</div>
+               </div>`
+        }
+      </div>
+    </div>
+
+    <!-- ── STRATEGY TABLE ── -->
     <div class="card">
       <div class="card-title">Performance by Strategy</div>
       ${!Object.keys(byStrategy).length
         ? empty('📈', 'No data yet', 'Add trades with strategy names to see breakdown')
-        : Object.entries(byStrategy).sort((a, b) => b[1].pnl - a[1].pnl).map(([k, d]) => `
-            <div class="trade-item" style="cursor:default">
-              <div class="trade-header">
-                <span class="trade-symbol">${esc(k)}</span>
-                <span class="trade-pnl ${d.pnl >= 0 ? 'positive' : 'negative'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</span>
-              </div>
-              <div class="trade-meta">
-                <span class="trade-meta-item">📊 ${d.count} trades</span>
-                <span class="trade-meta-item">✅ ${d.wins} wins</span>
-                <span class="trade-meta-item">📈 ${((d.wins / d.count) * 100).toFixed(1)}% win rate</span>
-              </div>
-            </div>`).join('')}
+        : `<div class="strategy-table">
+            <div class="strat-thead">
+              <div class="strat-th">Strategy</div>
+              <div class="strat-th">P&L</div>
+              <div class="strat-th">Trades</div>
+              <div class="strat-th">Win %</div>
+              <div class="strat-th">Bar</div>
+            </div>
+            ${Object.entries(byStrategy).sort((a,b) => b[1].pnl - a[1].pnl).map(([k, d]) => {
+              const wr = ((d.wins/d.count)*100).toFixed(0);
+              const allPnls = Object.values(byStrategy).map(x => Math.abs(x.pnl));
+              const maxPnl = Math.max(1, ...allPnls);
+              const barW = (Math.abs(d.pnl) / maxPnl * 100).toFixed(1);
+              return `
+                <div class="strat-row">
+                  <div class="strat-td strat-name">${esc(k)}</div>
+                  <div class="strat-td ${d.pnl >= 0 ? 'positive' : 'negative'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(0)}</div>
+                  <div class="strat-td" style="color:var(--text-secondary)">${d.count}</div>
+                  <div class="strat-td" style="color:var(--text-secondary)">${wr}%</div>
+                  <div class="strat-td strat-bar-cell">
+                    <div class="strat-bar" style="width:${barW}%;background:${d.pnl >= 0 ? 'var(--green)' : 'var(--red)'}"></div>
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>`}
     </div>
+
+    <!-- ── ASSET DISTRIBUTION ── -->
     <div class="card">
       <div class="card-title">Asset Distribution</div>
       ${!Object.keys(byAsset).length
         ? empty('📊', 'No data yet', 'Add trades to see asset breakdown')
-        : Object.entries(byAsset).map(([asset, count]) => {
+        : Object.entries(byAsset).sort((a,b) => b[1]-a[1]).map(([asset, count]) => {
             const pct = ((count / state.trades.length) * 100).toFixed(1);
             return `
-              <div class="trade-item" style="cursor:default;margin-bottom:0.875rem">
-                <div class="trade-header" style="margin-bottom:0.5rem">
+              <div style="margin-bottom:0.85rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
                   <span class="badge badge-${asset}">${asset}</span>
-                  <span style="color:var(--text-secondary);font-size:0.82rem">${count} trades · ${pct}%</span>
+                  <span style="color:var(--text-secondary);font-size:0.75rem;font-family:'JetBrains Mono',monospace">${count} · ${pct}%</span>
                 </div>
-                <div class="progress-bar" style="margin-top:0">
-                  <div class="progress-fill" style="width:${pct}%"></div>
-                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
               </div>`;
           }).join('')}
     </div>`;
@@ -601,7 +872,7 @@ function calendar() {
       <div class="calendar-stats">
         <div class="calendar-stat-item">
           <div class="calendar-stat-label">Monthly P&L</div>
-          <div class="calendar-stat-value" style="color:${monthPnL >= 0 ? 'var(--cyan)' : 'var(--red)'}">
+          <div class="calendar-stat-value" style="color:${monthPnL >= 0 ? 'var(--orange)' : 'var(--red)'}">
             ${monthPnL >= 0 ? '+' : ''}$${monthPnL.toFixed(2)}
           </div>
         </div>
@@ -619,7 +890,7 @@ function calendar() {
         </div>
         <div class="calendar-stat-item">
           <div class="calendar-stat-label">Avg Daily</div>
-          <div class="calendar-stat-value" style="color:${avgDaily >= 0 ? 'var(--cyan)' : 'var(--red)'}">
+          <div class="calendar-stat-value" style="color:${avgDaily >= 0 ? 'var(--orange)' : 'var(--red)'}">
             ${avgDaily >= 0 ? '+' : ''}$${Math.abs(avgDaily).toFixed(2)}
           </div>
         </div>
@@ -686,7 +957,7 @@ function journal() {
         ? empty('💭', 'No trade notes', 'Add notes when logging trades')
         : state.trades.filter(t => t.notes).map(t => {
             const pnl = Number(t.pnl);
-            const color = pnl >= 0 ? 'var(--cyan)' : 'var(--red)';
+            const color = pnl >= 0 ? 'var(--orange)' : 'var(--red)';
             return `
               <div class="journal-entry" style="border-left-color:${color}">
                 <div class="journal-date ${pnl >= 0 ? 'positive' : 'negative'}">
@@ -1015,10 +1286,41 @@ function tradeModal() {
             ${isView ? 'disabled' : ''}>${esc(d.notes || '')}</textarea>
         </div>
 
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;gap:0.5rem">
+            📸 Chart Screenshot
+            <span style="font-size:0.62rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">Optional — paste or upload</span>
+          </label>
+          ${isView && d.screenshot_url
+            ? `<div class="screenshot-preview">
+                <img src="${esc(d.screenshot_url)}" alt="Trade chart" onclick="this.parentElement.classList.toggle('expanded')" />
+                <div class="screenshot-hint">Tap to expand</div>
+               </div>`
+            : isView
+              ? `<div class="screenshot-empty">No screenshot attached</div>`
+              : `<div class="screenshot-drop" id="ss-drop"
+                  onclick="document.getElementById('ss-file').click()"
+                  ondragover="event.preventDefault();this.classList.add('drag-over')"
+                  ondragleave="this.classList.remove('drag-over')"
+                  ondrop="handleScreenshotDrop(event)">
+                  <input type="file" id="ss-file" accept="image/*" style="display:none" onchange="handleScreenshotFile(event)">
+                  <div id="ss-preview-wrap" style="display:none">
+                    <img id="ss-preview-img" style="max-width:100%;max-height:180px;border-radius:6px;display:block;margin:0 auto" />
+                    <button type="button" style="font-size:0.68rem;color:var(--red);background:none;border:none;cursor:pointer;margin-top:0.4rem" onclick="event.stopPropagation();clearScreenshot()">✕ Remove</button>
+                  </div>
+                  <div id="ss-placeholder">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4;margin-bottom:0.5rem"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <div style="font-size:0.75rem;color:var(--text-muted)">Drop image or click to upload</div>
+                    <div style="font-size:0.65rem;color:var(--text-muted);margin-top:0.2rem">PNG, JPG, WebP — max 5MB</div>
+                  </div>
+                </div>`
+          }
+        </div>
+
         ${isView ? `
-          <div class="pnl-result" style="border-color:${pnl >= 0 ? 'var(--cyan)' : 'var(--red)'}">
+          <div class="pnl-result" style="border-color:${pnl >= 0 ? 'var(--orange)' : 'var(--red)'}">
             <div class="stat-label">Final P&L</div>
-            <div class="stat-value" style="color:${pnl >= 0 ? 'var(--cyan)' : 'var(--red)'}">
+            <div class="stat-value" style="color:${pnl >= 0 ? 'var(--orange)' : 'var(--red)'}">
               ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}
             </div>
           </div>
@@ -1055,6 +1357,560 @@ function tradeModal() {
           </div>`}
       </div>
     </div>`;
+}
+
+// ── SCREENSHOT HELPERS ───────────────────────────────────
+let _ssFile = null;
+
+function handleScreenshotDrop(e) {
+  e.preventDefault();
+  document.getElementById('ss-drop')?.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) previewScreenshot(file);
+  else toast('Please drop an image file', 'error');
+}
+
+function handleScreenshotFile(e) {
+  const file = e.target.files[0];
+  if (file) previewScreenshot(file);
+}
+
+function previewScreenshot(file) {
+  if (file.size > 5 * 1024 * 1024) { toast('Image must be under 5MB', 'error'); return; }
+  _ssFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = document.getElementById('ss-preview-img');
+    const wrap = document.getElementById('ss-preview-wrap');
+    const placeholder = document.getElementById('ss-placeholder');
+    if (img) img.src = e.target.result;
+    if (wrap) wrap.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearScreenshot() {
+  _ssFile = null;
+  const wrap = document.getElementById('ss-preview-wrap');
+  const placeholder = document.getElementById('ss-placeholder');
+  const fileInput = document.getElementById('ss-file');
+  if (wrap) wrap.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'block';
+  if (fileInput) fileInput.value = '';
+}
+
+// Paste screenshot from clipboard
+document.addEventListener('paste', (e) => {
+  if (!state.showTradeModal || state.selectedTrade) return;
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) previewScreenshot(file);
+      break;
+    }
+  }
+});
+
+// ── ONBOARDING ────────────────────────────────────────────
+function dismissOnboarding() {
+  localStorage.setItem('q_onboarded', '1');
+  state.showOnboarding = false;
+  render();
+}
+
+function nextOnboardingStep() {
+  if (state.onboardingStep < 3) {
+    state.onboardingStep++;
+    render();
+  } else {
+    dismissOnboarding();
+  }
+}
+
+function onboardingModal() {
+  const steps = [
+    {
+      icon: `<svg width="52" height="52" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="obl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#obl)" stroke-width="2.5" fill="none"/><circle cx="16" cy="16" r="5" fill="url(#obl)" opacity="0.12"/><circle cx="16" cy="16" r="2.2" fill="url(#obl)"/><circle cx="16" cy="4.5" r="1.8" fill="url(#obl)"/><circle cx="16" cy="27.5" r="1.8" fill="url(#obl)"/><circle cx="4.5" cy="16" r="1.8" fill="url(#obl)"/><circle cx="27.5" cy="16" r="1.8" fill="url(#obl)"/></svg>`,
+      heading: 'Welcome to Quantario',
+      sub: "You're about to build the best trading habit of your career. Your journal is empty — let's change that in under 2 minutes.",
+      cta: "Let's go →",
+    },
+    {
+      icon: `<div style="font-size:2.8rem">📊</div>`,
+      heading: 'How do you want to log trades?',
+      sub: `
+        <div class="onboarding-options">
+          <div class="onboarding-option" onclick="changeView('import');dismissOnboarding()">
+            <div class="oo-icon">📁</div>
+            <div>
+              <div class="oo-title">CSV Import</div>
+              <div class="oo-desc">Upload a file from your broker — all trades in seconds</div>
+            </div>
+            <div class="oo-arrow">→</div>
+          </div>
+          <div class="onboarding-option" onclick="changeView('brokers');dismissOnboarding()">
+            <div class="oo-icon">🔌</div>
+            <div>
+              <div class="oo-title">Connect Broker</div>
+              <div class="oo-desc">Auto-sync with Alpaca or Binance</div>
+            </div>
+            <div class="oo-arrow">→</div>
+          </div>
+          <div class="onboarding-option" onclick="openAddTradeModal();dismissOnboarding()">
+            <div class="oo-icon">✏️</div>
+            <div>
+              <div class="oo-title">Log Manually</div>
+              <div class="oo-desc">Enter your first trade right now</div>
+            </div>
+            <div class="oo-arrow">→</div>
+          </div>
+        </div>`,
+      cta: 'Skip for now',
+      skipOnly: true,
+    },
+    {
+      icon: `<div style="font-size:2.8rem">🎯</div>`,
+      heading: 'Set your first goal',
+      sub: `
+        <p style="color:var(--text-secondary);font-size:0.83rem;margin-bottom:1.25rem">Traders with written goals earn 3× more consistently. Set a target — even a rough one.</p>
+        <div class="form-group">
+          <label class="form-label">Daily P&L Target ($)</label>
+          <input class="form-input" id="ob-daily" placeholder="e.g. 200" value="${state.goals.daily}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weekly P&L Target ($)</label>
+          <input class="form-input" id="ob-weekly" placeholder="e.g. 1000" value="${state.goals.weekly}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly P&L Target ($)</label>
+          <input class="form-input" id="ob-monthly" placeholder="e.g. 4000" value="${state.goals.monthly}">
+        </div>`,
+      cta: 'Save Goals & Start',
+      onSave: () => {
+        const d = document.getElementById('ob-daily')?.value || '';
+        const w = document.getElementById('ob-weekly')?.value || '';
+        const m = document.getElementById('ob-monthly')?.value || '';
+        state.goals = { daily: d, weekly: w, monthly: m };
+        localStorage.setItem('q_goals', JSON.stringify(state.goals));
+      }
+    },
+  ];
+  const step = steps[state.onboardingStep - 1];
+
+  return \`
+    <div class="modal onboarding-backdrop">
+      <div class="modal-content onboarding-modal" onclick="event.stopPropagation()">
+        <!-- Step dots -->
+        <div class="onboarding-dots">
+          \${[1,2,3].map(i => \`<div class="onboarding-dot \${i === state.onboardingStep ? 'active' : i < state.onboardingStep ? 'done' : ''}"></div>\`).join('')}
+        </div>
+
+        <div class="onboarding-icon">\${step.icon}</div>
+        <h2 class="onboarding-heading">\${step.heading}</h2>
+        <div class="onboarding-sub">\${step.sub}</div>
+
+        <div class="onboarding-actions">
+          \${!step.skipOnly
+            ? \`<button class="btn btn-primary" style="width:100%" onclick="
+                \${state.onboardingStep === 3 ? \`
+                  (function(){
+                    var d=document.getElementById('ob-daily')?.value||'';
+                    var w=document.getElementById('ob-weekly')?.value||'';
+                    var m=document.getElementById('ob-monthly')?.value||'';
+                    state.goals={daily:d,weekly:w,monthly:m};
+                    localStorage.setItem('q_goals',JSON.stringify(state.goals));
+                  })();
+                \` : ''}
+                nextOnboardingStep()
+              ">\${step.cta}</button>\`
+            : ''
+          }
+          \${state.onboardingStep > 1
+            ? \`<button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="nextOnboardingStep()">Skip for now</button>\`
+            : ''
+          }
+          \${state.onboardingStep === 1
+            ? \`<button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="dismissOnboarding()">I'll figure it out myself</button>\`
+            : ''
+          }
+        </div>
+
+        <button class="onboarding-close" onclick="dismissOnboarding()" title="Close">✕</button>
+      </div>
+    </div>\`;
+}
+
+// ── GOALS VIEW ────────────────────────────────────────────
+function goalsView(stats) {
+  const goals = state.goals;
+  const today = new Date().toDateString();
+  const thisWeekStart = new Date();
+  thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
+  const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+  const todayPnL    = state.trades.filter(t => t.exit_date && new Date(t.exit_date).toDateString() === today).reduce((s,t) => s+Number(t.pnl),0);
+  const weekPnL     = state.trades.filter(t => t.exit_date && new Date(t.exit_date) >= thisWeekStart).reduce((s,t) => s+Number(t.pnl),0);
+  const monthPnL    = state.trades.filter(t => t.exit_date && new Date(t.exit_date) >= thisMonthStart).reduce((s,t) => s+Number(t.pnl),0);
+
+  function goalCard(period, label, current, target) {
+    const t = parseFloat(target);
+    const hasTarget = !isNaN(t) && t > 0;
+    const pct = hasTarget ? Math.max(0, Math.min(100, (current / t) * 100)) : 0;
+    const pos = current >= 0;
+    const reached = hasTarget && current >= t;
+    return \`
+      <div class="goal-card \${reached ? 'goal-reached' : ''}">
+        \${reached ? '<div class="goal-badge">✓ Reached!</div>' : ''}
+        <div class="goal-period">\${label}</div>
+        <div class="goal-current \${pos ? 'positive' : 'negative'}">\${pos?'+':''}\$\${current.toFixed(2)}</div>
+        \${hasTarget
+          ? \`<div class="goal-target">Target: \$\${t.toFixed(0)}</div>
+             <div class="progress-bar" style="margin-top:0.75rem">
+               <div class="progress-fill" style="width:\${pct}%"></div>
+             </div>
+             <div class="goal-pct">\${pct.toFixed(0)}% of goal</div>\`
+          : \`<div class="goal-no-target">No target set</div>\`
+        }
+      </div>\`;
+  }
+
+  return \`
+    <div class="page-header">
+      <h1 class="header">Goals & Targets</h1>
+      <button class="btn btn-primary hide-mobile" onclick="openGoalEditor()">✎ Edit Goals</button>
+    </div>
+
+    <div class="goals-grid">
+      \${goalCard('daily',   'Today',     todayPnL,  goals.daily)}
+      \${goalCard('weekly',  'This Week', weekPnL,   goals.weekly)}
+      \${goalCard('monthly', 'This Month',monthPnL,  goals.monthly)}
+    </div>
+
+    <div class="card" style="margin-top:1.5rem">
+      <div class="card-title">📈 All-Time Performance</div>
+      <div class="goals-alltime">
+        <div class="alltime-stat">
+          <div class="alltime-val">\${state.trades.length}</div>
+          <div class="alltime-lbl">Total Trades</div>
+        </div>
+        <div class="alltime-stat">
+          <div class="alltime-val \${stats.totalPnL >= 0 ? 'positive' : 'negative'}">\${stats.totalPnL >= 0?'+':''}\$\${stats.totalPnL.toFixed(2)}</div>
+          <div class="alltime-lbl">Total P&L</div>
+        </div>
+        <div class="alltime-stat">
+          <div class="alltime-val">\${stats.winRate}%</div>
+          <div class="alltime-lbl">Win Rate</div>
+        </div>
+        <div class="alltime-stat">
+          <div class="alltime-val">\${stats.profitFactor}</div>
+          <div class="alltime-lbl">Profit Factor</div>
+        </div>
+        <div class="alltime-stat">
+          <div class="alltime-val">\${state.journalEntries.length}</div>
+          <div class="alltime-lbl">Journal Entries</div>
+        </div>
+        <div class="alltime-stat">
+          <div class="alltime-val">\${state.brokers.length}</div>
+          <div class="alltime-lbl">Connected Brokers</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.25rem">
+      <div class="card-title">🎯 Edit Targets</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Daily Target ($)</label>
+          <input class="form-input" id="g-daily" placeholder="e.g. 200" value="\${esc(goals.daily)}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weekly Target ($)</label>
+          <input class="form-input" id="g-weekly" placeholder="e.g. 1000" value="\${esc(goals.weekly)}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly Target ($)</label>
+          <input class="form-input" id="g-monthly" placeholder="e.g. 4000" value="\${esc(goals.monthly)}">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveGoals()">Save Targets</button>
+    </div>\`;
+}
+
+function saveGoals() {
+  const d = document.getElementById('g-daily')?.value || '';
+  const w = document.getElementById('g-weekly')?.value || '';
+  const m = document.getElementById('g-monthly')?.value || '';
+  state.goals = { daily: d, weekly: w, monthly: m };
+  localStorage.setItem('q_goals', JSON.stringify(state.goals));
+  toast('Goals saved!', 'success');
+  render();
+}
+
+function openGoalEditor() {
+  document.getElementById('g-daily')?.focus();
+}
+
+// ── RISK CALCULATOR VIEW ──────────────────────────────────
+function riskCalcView() {
+  const rc = state.riskCalc;
+
+  function calcRisk() {
+    const acc  = parseFloat(document.getElementById('rc-acc')?.value || 0);
+    const rPct = parseFloat(document.getElementById('rc-rpct')?.value || 0);
+    const ep   = parseFloat(document.getElementById('rc-ep')?.value || 0);
+    const sl   = parseFloat(document.getElementById('rc-sl')?.value || 0);
+    const tp   = parseFloat(document.getElementById('rc-tp')?.value || 0);
+    const dir  = document.getElementById('rc-dir')?.value || 'long';
+
+    if (!acc || !rPct || !ep || !sl) { toast('Fill in all required fields', 'warn'); return; }
+
+    const riskAmt   = acc * (rPct / 100);
+    const slDist    = Math.abs(ep - sl);
+    if (slDist === 0) { toast('Stop loss cannot equal entry price', 'error'); return; }
+    const posSize   = riskAmt / slDist;
+    const riskValid = (dir === 'long' ? ep > sl : ep < sl);
+    const tpDist    = tp ? Math.abs(tp - ep) : null;
+    const rr        = tpDist ? (tpDist / slDist).toFixed(2) : null;
+    const potential = tpDist ? (posSize * tpDist).toFixed(2) : null;
+
+    state.riskCalc = { ...state.riskCalc,
+      accountSize: acc, riskPct: rPct, entryPrice: ep, stopLoss: sl, takeProfit: tp, direction: dir,
+      result: { riskAmt, slDist, posSize, rr, potential, riskValid }
+    };
+    render();
+  }
+
+  const r = rc.result;
+
+  return \`
+    <div class="page-header">
+      <h1 class="header">Risk Calculator</h1>
+    </div>
+    <div class="riskcalc-layout">
+      <div class="card riskcalc-inputs">
+        <div class="card-title">⚙️ Position Parameters</div>
+        <div class="form-group">
+          <label class="form-label">Account Size ($) *</label>
+          <input type="number" class="form-input" id="rc-acc" placeholder="e.g. 10000" value="\${rc.accountSize || ''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;justify-content:space-between">
+            <span>Risk Per Trade (%)</span>
+            <span class="rc-pct-badge" id="rc-pct-lbl">\${rc.riskPct || 1}%</span>
+          </label>
+          <input type="range" class="form-range" id="rc-rpct" min="0.1" max="5" step="0.1"
+            value="\${rc.riskPct || 1}"
+            oninput="document.getElementById('rc-pct-lbl').textContent=this.value+'%'">
+          <div class="rc-range-labels"><span>0.1%</span><span>1%</span><span>2%</span><span>3%</span><span>5%</span></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Direction</label>
+            <select class="form-select" id="rc-dir">
+              <option value="long"  \${rc.direction==='long'  ?'selected':''}>Long (Buy)</option>
+              <option value="short" \${rc.direction==='short' ?'selected':''}>Short (Sell)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Entry Price *</label>
+            <input type="number" step="any" class="form-input" id="rc-ep" placeholder="0.00" value="\${rc.entryPrice || ''}">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Stop Loss *</label>
+            <input type="number" step="any" class="form-input" id="rc-sl" placeholder="0.00" value="\${rc.stopLoss || ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Take Profit</label>
+            <input type="number" step="any" class="form-input" id="rc-tp" placeholder="Optional" value="\${rc.takeProfit || ''}">
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="(function(){
+          state.riskCalc.accountSize = document.getElementById('rc-acc').value;
+          state.riskCalc.riskPct     = document.getElementById('rc-rpct').value;
+          state.riskCalc.entryPrice  = document.getElementById('rc-ep').value;
+          state.riskCalc.stopLoss    = document.getElementById('rc-sl').value;
+          state.riskCalc.takeProfit  = document.getElementById('rc-tp').value;
+          state.riskCalc.direction   = document.getElementById('rc-dir').value;
+          var acc=parseFloat(state.riskCalc.accountSize)||0;
+          var rPct=parseFloat(state.riskCalc.riskPct)||0;
+          var ep=parseFloat(state.riskCalc.entryPrice)||0;
+          var sl=parseFloat(state.riskCalc.stopLoss)||0;
+          var tp=parseFloat(state.riskCalc.takeProfit)||0;
+          var dir=state.riskCalc.direction;
+          if(!acc||!rPct||!ep||!sl){toast('Fill in all required fields','warn');return;}
+          var riskAmt=acc*(rPct/100);
+          var slDist=Math.abs(ep-sl);
+          if(slDist===0){toast('Stop loss cannot equal entry price','error');return;}
+          var posSize=riskAmt/slDist;
+          var tpDist=tp?Math.abs(tp-ep):null;
+          var rr=tpDist?(tpDist/slDist).toFixed(2):null;
+          var potential=tpDist?(posSize*tpDist).toFixed(2):null;
+          state.riskCalc.result={riskAmt,slDist,posSize,rr,potential};
+          render();
+        })()">Calculate Position Size</button>
+      </div>
+
+      <div class="riskcalc-results">
+        \${r ? \`
+          <div class="rc-result-card rc-primary">
+            <div class="rc-result-label">Position Size</div>
+            <div class="rc-result-value">\${r.posSize.toFixed(r.posSize < 10 ? 4 : 2)}</div>
+            <div class="rc-result-sub">units / shares / contracts</div>
+          </div>
+          <div class="rc-result-card">
+            <div class="rc-result-label">Max Risk</div>
+            <div class="rc-result-value negative">-\$\${r.riskAmt.toFixed(2)}</div>
+            <div class="rc-result-sub">\${rc.riskPct}% of account</div>
+          </div>
+          <div class="rc-result-card">
+            <div class="rc-result-label">Stop Distance</div>
+            <div class="rc-result-value">\${r.slDist.toFixed(4)}</div>
+            <div class="rc-result-sub">price points</div>
+          </div>
+          \${r.rr ? \`
+            <div class="rc-result-card \${parseFloat(r.rr) >= 2 ? 'rc-good' : parseFloat(r.rr) < 1 ? 'rc-bad' : ''}">
+              <div class="rc-result-label">Risk/Reward</div>
+              <div class="rc-result-value">1 : \${r.rr}</div>
+              <div class="rc-result-sub">\${parseFloat(r.rr) >= 2 ? '✓ Good setup' : parseFloat(r.rr) < 1 ? '⚠ Poor ratio' : 'Acceptable'}</div>
+            </div>
+            <div class="rc-result-card rc-good">
+              <div class="rc-result-label">Potential Profit</div>
+              <div class="rc-result-value positive">+\$\${r.potential}</div>
+              <div class="rc-result-sub">if TP is hit</div>
+            </div>
+          \` : ''}
+        \` : \`
+          <div class="rc-empty">
+            <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3">🧮</div>
+            <div style="font-size:0.9rem;font-weight:700;margin-bottom:0.4rem">Results appear here</div>
+            <div style="font-size:0.78rem;color:var(--text-muted)">Fill in the form and click Calculate</div>
+          </div>
+        \`}
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.25rem">
+      <div class="card-title">📚 Risk Rules</div>
+      <div class="risk-rules">
+        <div class="risk-rule">
+          <div class="risk-rule-icon" style="color:var(--green)">✓</div>
+          <div><strong>1% rule</strong> — Risk no more than 1% per trade to survive drawdowns</div>
+        </div>
+        <div class="risk-rule">
+          <div class="risk-rule-icon" style="color:var(--green)">✓</div>
+          <div><strong>2:1 minimum R/R</strong> — Only take trades where potential reward is at least 2× your risk</div>
+        </div>
+        <div class="risk-rule">
+          <div class="risk-rule-icon" style="color:var(--orange)">⚠</div>
+          <div><strong>5% daily max loss</strong> — Stop trading for the day if you lose 5% of account</div>
+        </div>
+        <div class="risk-rule">
+          <div class="risk-rule-icon" style="color:var(--orange)">⚠</div>
+          <div><strong>Never move your stop</strong> — Set it before entry, respect it always</div>
+        </div>
+      </div>
+    </div>\`;
+}
+
+// ── LEADERBOARD VIEW ──────────────────────────────────────
+function leaderboardView(stats) {
+  const user = getUser() || {};
+  const initial = (user.name || 'U').charAt(0).toUpperCase();
+
+  // ── Composite score: winRate(40pts) + profitFactor(30pts) + relativePnL(30pts) ──
+  function compositeScore(p, allPlayers) {
+    const maxPnL = Math.max(1, ...allPlayers.map(x => x.totalPnL));
+    const pf = p.profitFactor || 1;
+    return (
+      (p.winRate / 100) * 40 +                          // 0-40 pts
+      Math.min(pf / 3, 1) * 30 +                        // 0-30 pts (capped at PF=3)
+      (Math.max(0, p.totalPnL) / maxPnL) * 30           // 0-30 pts
+    );
+  }
+  // Mock leaderboard data (replace with API when available)
+  const rawPlayers = [
+    { name:'Marcus T.',   winRate:73, totalPnL:28400, trades:184, profitFactor:2.8, badge:'🔥' },
+    { name:'Sarah K.',    winRate:68, totalPnL:19200, trades:221, profitFactor:2.4, badge:'⚡' },
+    { name:'Daniel R.',   winRate:65, totalPnL:14800, trades:156, profitFactor:3.1, badge:'💎' },
+    { name:'Alex M.',     winRate:62, totalPnL:11200, trades:98,  profitFactor:1.9, badge:'🌟' },
+    { name:'Jordan C.',   winRate:61, totalPnL:9800,  trades:143, profitFactor:1.7, badge:'' },
+    { name: esc(user.name || 'You'), winRate: parseFloat(stats.winRate)||0, totalPnL: parseFloat(stats.totalPnL)||0, trades: state.trades.length, profitFactor: parseFloat(stats.profitFactor)||1, badge:'👤', isYou:true },
+  ];
+  const leaderData = rawPlayers
+    .map(p => ({ ...p, score: compositeScore(p, rawPlayers) }))
+    .sort((a,b) => b.score - a.score)
+    .map((p,i) => ({...p, rank: i+1}));
+
+  const you = leaderData.find(p => p.isYou);
+
+  return \`
+    <div class="page-header">
+      <h1 class="header">Leaderboard</h1>
+      <span class="lb-beta-tag">Beta</span>
+    </div>
+
+    <!-- Your public card -->
+    <div class="card lb-profile-card">
+      <div class="lb-profile-top">
+        <div class="lb-avatar">\${initial}</div>
+        <div>
+          <div class="lb-profile-name">\${esc(user.name || 'You')}</div>
+          <div class="lb-profile-handle">@\${esc((user.email||'').split('@')[0] || 'trader')}</div>
+        </div>
+        <div class="lb-profile-rank">#\${you ? you.rank : '—'}</div>
+      </div>
+      <div class="lb-profile-stats">
+        <div class="lb-pstat"><div class="lb-pval \${stats.totalPnL>=0?'positive':'negative'}">\${stats.totalPnL>=0?'+':''}\$\${parseFloat(stats.totalPnL).toFixed(0)}</div><div class="lb-plbl">Total P&L</div></div>
+        <div class="lb-pstat"><div class="lb-pval">\${stats.winRate}%</div><div class="lb-plbl">Win Rate</div></div>
+        <div class="lb-pstat"><div class="lb-pval">\${state.trades.length}</div><div class="lb-plbl">Trades</div></div>
+        <div class="lb-pstat"><div class="lb-pval">\${stats.profitFactor}</div><div class="lb-plbl">Prof. Factor</div></div>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:1rem">
+        <button class="btn btn-secondary btn-sm" onclick="toast('Public profile sharing coming soon!','info')">🔗 Share Profile</button>
+        <button class="btn btn-secondary btn-sm" onclick="toast('Profile customization coming soon!','info')">✎ Customize</button>
+      </div>
+    </div>
+
+    <!-- Leaderboard table -->
+    <div class="card" style="margin-top:1.25rem">
+      <div class="card-title">🏆 Top Traders This Month</div>
+      <div class="lb-table">
+        <div class="lb-thead">
+          <div class="lb-th lb-col-rank">Rank</div>
+          <div class="lb-th lb-col-name">Trader</div>
+          <div class="lb-th lb-col-pnl">P&L</div>
+          <div class="lb-th lb-col-wr">Win Rate</div>
+          <div class="lb-th lb-col-score hide-mobile">Score</div>
+        </div>
+        \${leaderData.map(p => \`
+          <div class="lb-row \${p.isYou ? 'lb-row-you' : ''}">
+            <div class="lb-col-rank">
+              \${p.rank <= 3
+                ? \`<span class="lb-medal">\${['🥇','🥈','🥉'][p.rank-1]}</span>\`
+                : \`<span class="lb-rank-num">#\${p.rank}</span>\`
+              }
+            </div>
+            <div class="lb-col-name">
+              <div class="lb-row-avatar">\${p.name.charAt(0)}</div>
+              <div>
+                <div class="lb-row-name">\${p.isYou ? '<strong>You</strong>' : p.name} \${p.badge}</div>
+                \${p.isYou ? '<div class="lb-row-sub" style="color:var(--orange)">Your position</div>' : ''}
+              </div>
+            </div>
+            <div class="lb-col-pnl \${p.totalPnL>=0?'positive':'negative'}">\${p.totalPnL>=0?'+':''}\$\${p.totalPnL.toLocaleString()}</div>
+            <div class="lb-col-wr">\${p.winRate}%</div>
+            <div class="lb-col-tr hide-mobile">\${p.trades}</div>
+          </div>\`).join('')}
+      </div>
+      <div style="text-align:center;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:0.73rem;color:var(--text-muted)">
+        🚧 Live leaderboard with real community data coming soon. Log more trades to climb the ranks!
+      </div>
+    </div>\`;
 }
 
 // ── NAVIGATION ────────────────────────────────────────────
@@ -1223,8 +2079,22 @@ async function doSaveTrade() {
     return;
   }
 
+  // Upload screenshot if one was attached
+  let screenshotUrl = null;
+  if (_ssFile) {
+    try {
+      if (btn) btn.innerHTML = '<span class="spinner"></span> Uploading screenshot…';
+      const up = await api.uploadScreenshot(_ssFile);
+      screenshotUrl = up.url;
+    } catch (err) {
+      // Non-fatal — warn but continue saving the trade
+      toast(`Screenshot upload failed (trade will still be saved): ${err.message}`, 'warn', 4000);
+    }
+  }
+
   try {
     state.syncing = true;
+    if (btn) btn.innerHTML = '<span class="spinner"></span> Saving…';
     const res = await api.createTrade({
       symbol:            sym,
       entry_price:       ep,
@@ -1240,7 +2110,9 @@ async function doSaveTrade() {
       strategy:          document.getElementById('t-strat').value || null,
       notes:             document.getElementById('t-notes').value || null,
       market_conditions: document.getElementById('t-cond').value  || null,
+      screenshot_url:    screenshotUrl || null,
     });
+    _ssFile = null;
     state.trades.unshift(res.data);
     state.syncing = false;
     toast(`${sym} saved — ${Number(res.data.pnl) >= 0 ? '+' : ''}$${Number(res.data.pnl).toFixed(2)}`, 'success');
@@ -1719,10 +2591,13 @@ function toggleMobileMore() {
   sheet.id = 'mobile-more-sheet';
   sheet.className = 'mobile-more-sheet';
   const items = [
-    { id: 'journal',  label: 'Journal',  icon: NAV_ICONS.journal },
-    { id: 'calendar', label: 'Calendar', icon: NAV_ICONS.calendar },
-    { id: 'import',   label: 'Import',   icon: NAV_ICONS.import },
-    { id: 'brokers',  label: 'Brokers',  icon: NAV_ICONS.brokers },
+    { id: 'journal',     label: 'Journal',     icon: NAV_ICONS.journal },
+    { id: 'calendar',    label: 'Calendar',    icon: NAV_ICONS.calendar },
+    { id: 'import',      label: 'Import',      icon: NAV_ICONS.import },
+    { id: 'brokers',     label: 'Brokers',     icon: NAV_ICONS.brokers },
+    { id: 'goals',       label: 'Goals',       icon: NAV_ICONS.goals },
+    { id: 'riskcalc',    label: 'Risk Calc',   icon: NAV_ICONS.riskcalc },
+    { id: 'leaderboard', label: 'Leaderboard', icon: NAV_ICONS.leaderboard },
   ];
   sheet.innerHTML = `
     <div class="mobile-more-backdrop" onclick="this.parentElement.remove()"></div>
