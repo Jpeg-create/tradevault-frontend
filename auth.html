@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quantario - Sign In</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     #google-btn-container { display:flex; justify-content:center; min-height:44px; align-items:center; }
     .google-note { font-size:0.72rem; color:var(--text-secondary); text-align:center; margin-top:0.6rem; line-height:1.5; }
     .auth-token-box { background:var(--bg-base); border:1px solid var(--border-color); border-radius:6px; padding:0.75rem; font-size:0.72rem; word-break:break-all; color:var(--cyan); cursor:pointer; font-family:monospace; margin:0.5rem 0; transition:border-color 0.2s; }
-    .auth-token-box:hover { border-color:var(--cyan); }
+    .auth-token-box:hover { border-color:var(--orange); }
     .password-strength { display:none; margin-top:0.5rem; align-items:center; gap:0.5rem; }
     .pw-bar  { flex:1; height:4px; background:var(--bg-tertiary); border-radius:2px; overflow:hidden; }
     .pw-fill { height:100%; border-radius:2px; transition:width 0.3s, background 0.3s; }
@@ -24,7 +24,7 @@
 
     <div class="auth-header">
       <div class="auth-logo">
-        <div class="auth-logo-icon"><svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="24" cy="24" r="21" stroke="url(#vgl)" stroke-width="2.5" fill="rgba(0,212,255,0.05)"/><circle cx="24" cy="24" r="15" stroke="url(#vgl)" stroke-width="1.5" fill="rgba(0,212,255,0.04)"/><line x1="3" y1="24" x2="9" y2="24" stroke="url(#vgl)" stroke-width="2.5" stroke-linecap="round"/><circle cx="24" cy="7" r="2" fill="url(#vgl)"/><circle cx="24" cy="41" r="2" fill="url(#vgl)"/><circle cx="7" cy="24" r="2" fill="url(#vgl)"/><circle cx="41" cy="24" r="2" fill="url(#vgl)"/><rect x="13" y="28" width="3" height="6" rx="0.5" fill="#00d4ff"/><line x1="14.5" y1="26" x2="14.5" y2="28" stroke="#00d4ff" stroke-width="1.2"/><rect x="19" y="21" width="3" height="10" rx="0.5" fill="#a3e635"/><line x1="20.5" y1="18" x2="20.5" y2="21" stroke="#a3e635" stroke-width="1.2"/><rect x="25" y="24" width="3" height="8" rx="0.5" fill="#00d4ff"/><line x1="26.5" y1="21" x2="26.5" y2="24" stroke="#00d4ff" stroke-width="1.2"/><rect x="31" y="17" width="3" height="13" rx="0.5" fill="#a3e635"/><line x1="32.5" y1="14" x2="32.5" y2="17" stroke="#a3e635" stroke-width="1.2"/><polyline points="13,29 19,22 25,25 32,15" stroke="#a3e635" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+        <div class="auth-logo-icon"><svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6535"/><stop offset="100%" stop-color="#FF2D6B"/></linearGradient></defs><circle cx="24" cy="24" r="21" stroke="url(#vgl)" stroke-width="2.5" fill="rgba(255,101,53,0.05)"/><circle cx="24" cy="24" r="15" stroke="url(#vgl)" stroke-width="1.5" fill="rgba(255,101,53,0.04)"/><line x1="3" y1="24" x2="9" y2="24" stroke="url(#vgl)" stroke-width="2.5" stroke-linecap="round"/><circle cx="24" cy="7" r="2" fill="url(#vgl)"/><circle cx="24" cy="41" r="2" fill="url(#vgl)"/><circle cx="7" cy="24" r="2" fill="url(#vgl)"/><circle cx="41" cy="24" r="2" fill="url(#vgl)"/><rect x="13" y="28" width="3" height="6" rx="0.5" fill="#FF6535"/><line x1="14.5" y1="26" x2="14.5" y2="28" stroke="#FF6535" stroke-width="1.2"/><rect x="19" y="21" width="3" height="10" rx="0.5" fill="#FF2D6B"/><line x1="20.5" y1="18" x2="20.5" y2="21" stroke="#FF2D6B" stroke-width="1.2"/><rect x="25" y="24" width="3" height="8" rx="0.5" fill="#FF6535"/><line x1="26.5" y1="21" x2="26.5" y2="24" stroke="#FF6535" stroke-width="1.2"/><rect x="31" y="17" width="3" height="13" rx="0.5" fill="#FF2D6B"/><line x1="32.5" y1="14" x2="32.5" y2="17" stroke="#FF2D6B" stroke-width="1.2"/><polyline points="13,29 19,22 25,25 32,15" stroke="#FF2D6B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
         <div class="auth-logo-text">Quan<span>tario</span></div>
       </div>
       <div class="auth-tagline">Your professional trading journal</div>
