@@ -11,8 +11,8 @@
   <style>
     #google-btn-container { display:flex; justify-content:center; min-height:44px; align-items:center; }
     .google-note { font-size:0.72rem; color:var(--text-secondary); text-align:center; margin-top:0.6rem; line-height:1.5; }
-    .auth-token-box { background:var(--bg-primary); border:1px solid var(--border-color); border-radius:6px; padding:0.75rem; font-size:0.72rem; word-break:break-all; color:var(--accent-green); cursor:pointer; font-family:monospace; margin:0.5rem 0; transition:border-color 0.2s; }
-    .auth-token-box:hover { border-color:var(--accent-green); }
+    .auth-token-box { background:var(--bg-base); border:1px solid var(--border-color); border-radius:6px; padding:0.75rem; font-size:0.72rem; word-break:break-all; color:var(--cyan); cursor:pointer; font-family:monospace; margin:0.5rem 0; transition:border-color 0.2s; }
+    .auth-token-box:hover { border-color:var(--cyan); }
     .password-strength { display:none; margin-top:0.5rem; align-items:center; gap:0.5rem; }
     .pw-bar  { flex:1; height:4px; background:var(--bg-tertiary); border-radius:2px; overflow:hidden; }
     .pw-fill { height:100%; border-radius:2px; transition:width 0.3s, background 0.3s; }
@@ -311,11 +311,11 @@
       if (/[0-9]/.test(val))        score++;
       if (/[^A-Za-z0-9]/.test(val)) score++;
       const levels = [
-        { pct:'20%', color:'var(--accent-red)',    text:'Weak'   },
+        { pct:'20%', color:'var(--red)',    text:'Weak'   },
         { pct:'40%', color:'#ff8c32',              text:'Fair'   },
-        { pct:'60%', color:'var(--accent-yellow)', text:'Medium' },
+        { pct:'60%', color:'var(--amber)', text:'Medium' },
         { pct:'80%', color:'#a8e063',              text:'Good'   },
-        { pct:'100%',color:'var(--accent-green)',  text:'Strong' },
+        { pct:'100%',color:'var(--cyan)',  text:'Strong' },
       ];
       const lvl = levels[Math.min(score - 1, 4)] || levels[0];
       fill.style.width      = lvl.pct;

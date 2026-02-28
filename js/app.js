@@ -66,7 +66,7 @@ function showConfirm(message, onConfirm, opts = {}) {
     if (requireInput) {
       const val = (input?.value || '').trim();
       if (val !== requireInput) {
-        input.style.borderColor = 'var(--accent-red)';
+        input.style.borderColor = 'var(--red)';
         input.placeholder = `Type exactly: ${requireInput}`;
         input.value = '';
         return;
@@ -244,7 +244,7 @@ function render() {
       <!-- ── DESKTOP SIDEBAR ─── -->
       <div class="sidebar">
         <div class="logo">
-          <div class="logo-icon"><svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vg)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vg)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vg)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vg)"/><circle cx="16" cy="27" r="1.5" fill="url(#vg)"/><circle cx="5" cy="16" r="1.5" fill="url(#vg)"/><circle cx="27" cy="16" r="1.5" fill="url(#vg)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><line x1="10" y1="18" x2="10" y2="19" stroke="#00d4ff" stroke-width="1"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><line x1="14" y1="12" x2="14" y2="14" stroke="#a3e635" stroke-width="1"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><line x1="18" y1="14" x2="18" y2="16" stroke="#00d4ff" stroke-width="1"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><line x1="22" y1="10" x2="22" y2="12" stroke="#a3e635" stroke-width="1"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+          <div class="logo-icon"><svg width="34" height="34" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogo" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><rect x="1" y="1" width="38" height="38" rx="10" fill="rgba(0,212,255,0.07)" stroke="url(#qlogo)" stroke-width="1.5"/><path d="M8 29 L15 20 L21 24 L32 12" stroke="url(#qlogo)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="8" cy="29" r="2.5" fill="#00d4ff"/><circle cx="15" cy="20" r="2" fill="url(#qlogo)"/><circle cx="21" cy="24" r="2" fill="url(#qlogo)"/><circle cx="32" cy="12" r="2.5" fill="#a3e635"/><rect x="7" y="32" width="4" height="5" rx="1" fill="rgba(0,212,255,0.28)"/><rect x="14" y="28" width="4" height="9" rx="1" fill="rgba(0,212,255,0.18)"/><rect x="21" y="30" width="4" height="7" rx="1" fill="rgba(163,230,53,0.18)"/><rect x="30" y="26" width="4" height="11" rx="1" fill="rgba(163,230,53,0.28)"/></svg></div>
           <div class="logo-text">Quan<span>tario</span></div>
         </div>
         <nav style="flex:1">
@@ -281,7 +281,7 @@ function render() {
         <!-- Mobile top bar -->
         <div class="mobile-topbar">
           <div class="logo" style="margin-bottom:0">
-            <div class="logo-icon" style="width:22px;height:22px"><svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vgt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><circle cx="16" cy="16" r="14" stroke="url(#vgt)" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="10" stroke="url(#vgt)" stroke-width="1.2" fill="rgba(0,212,255,0.06)"/><line x1="2" y1="16" x2="6" y2="16" stroke="url(#vgt)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="url(#vgt)"/><circle cx="16" cy="27" r="1.5" fill="url(#vgt)"/><circle cx="5" cy="16" r="1.5" fill="url(#vgt)"/><circle cx="27" cy="16" r="1.5" fill="url(#vgt)"/><rect x="9" y="19" width="2" height="4" rx="0.5" fill="#00d4ff"/><rect x="13" y="14" width="2" height="7" rx="0.5" fill="#a3e635"/><rect x="17" y="16" width="2" height="5" rx="0.5" fill="#00d4ff"/><rect x="21" y="12" width="2" height="9" rx="0.5" fill="#a3e635"/><polyline points="9,20 13,16 17,18 22,11" stroke="#a3e635" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+            <div class="logo-icon" style="width:22px;height:22px"><svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><rect x="1" y="1" width="38" height="38" rx="10" fill="rgba(0,212,255,0.07)" stroke="url(#qlogot)" stroke-width="1.5"/><path d="M8 29 L15 20 L21 24 L32 12" stroke="url(#qlogot)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="8" cy="29" r="2.5" fill="#00d4ff"/><circle cx="15" cy="20" r="2" fill="url(#qlogot)"/><circle cx="21" cy="24" r="2" fill="url(#qlogot)"/><circle cx="32" cy="12" r="2.5" fill="#a3e635"/><rect x="7" y="32" width="4" height="5" rx="1" fill="rgba(0,212,255,0.28)"/><rect x="14" y="28" width="4" height="9" rx="1" fill="rgba(0,212,255,0.18)"/><rect x="21" y="30" width="4" height="7" rx="1" fill="rgba(163,230,53,0.18)"/><rect x="30" y="26" width="4" height="11" rx="1" fill="rgba(163,230,53,0.28)"/></svg></div>
             <div class="logo-text" style="font-size:0.9rem">Quan<span>tario</span></div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem">
@@ -302,7 +302,7 @@ function render() {
           ${NAV_ICONS.trades}<span>Trades</span>
         </button>
         <button class="bottom-nav-fab" onclick="openAddTradeModal()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qlogot" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a3e635"/></linearGradient></defs><rect x="1" y="1" width="38" height="38" rx="10" fill="rgba(0,212,255,0.07)" stroke="url(#qlogot)" stroke-width="1.5"/><path d="M8 29 L15 20 L21 24 L32 12" stroke="url(#qlogot)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="8" cy="29" r="2.5" fill="#00d4ff"/><circle cx="15" cy="20" r="2" fill="url(#qlogot)"/><circle cx="21" cy="24" r="2" fill="url(#qlogot)"/><circle cx="32" cy="12" r="2.5" fill="#a3e635"/><rect x="7" y="32" width="4" height="5" rx="1" fill="rgba(0,212,255,0.28)"/><rect x="14" y="28" width="4" height="9" rx="1" fill="rgba(0,212,255,0.18)"/><rect x="21" y="30" width="4" height="7" rx="1" fill="rgba(163,230,53,0.18)"/><rect x="30" y="26" width="4" height="11" rx="1" fill="rgba(163,230,53,0.28)"/></svg>
         </button>
         <button class="bottom-nav-item ${state.currentView === 'analytics' ? 'active' : ''}" onclick="changeView('analytics')">
           ${NAV_ICONS.analytics}<span>Stats</span>
@@ -423,7 +423,7 @@ function tradeCard(t, showDelete = false) {
   const ep  = Number(t.entry_price);
   const xp  = Number(t.exit_price);
   const dec = ep < 10 ? 4 : 2;
-  const pnlColor = pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+  const pnlColor = pnl >= 0 ? 'var(--cyan)' : 'var(--red)';
   return `
     <div class="trade-item" onclick="viewTrade('${esc(t.id)}')">
       <div class="trade-header">
@@ -601,7 +601,7 @@ function calendar() {
       <div class="calendar-stats">
         <div class="calendar-stat-item">
           <div class="calendar-stat-label">Monthly P&L</div>
-          <div class="calendar-stat-value" style="color:${monthPnL >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+          <div class="calendar-stat-value" style="color:${monthPnL >= 0 ? 'var(--cyan)' : 'var(--red)'}">
             ${monthPnL >= 0 ? '+' : ''}$${monthPnL.toFixed(2)}
           </div>
         </div>
@@ -619,7 +619,7 @@ function calendar() {
         </div>
         <div class="calendar-stat-item">
           <div class="calendar-stat-label">Avg Daily</div>
-          <div class="calendar-stat-value" style="color:${avgDaily >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+          <div class="calendar-stat-value" style="color:${avgDaily >= 0 ? 'var(--cyan)' : 'var(--red)'}">
             ${avgDaily >= 0 ? '+' : ''}$${Math.abs(avgDaily).toFixed(2)}
           </div>
         </div>
@@ -686,7 +686,7 @@ function journal() {
         ? empty('💭', 'No trade notes', 'Add notes when logging trades')
         : state.trades.filter(t => t.notes).map(t => {
             const pnl = Number(t.pnl);
-            const color = pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+            const color = pnl >= 0 ? 'var(--cyan)' : 'var(--red)';
             return `
               <div class="journal-entry" style="border-left-color:${color}">
                 <div class="journal-date ${pnl >= 0 ? 'positive' : 'negative'}">
@@ -1016,9 +1016,9 @@ function tradeModal() {
         </div>
 
         ${isView ? `
-          <div class="pnl-result" style="border-color:${pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+          <div class="pnl-result" style="border-color:${pnl >= 0 ? 'var(--cyan)' : 'var(--red)'}">
             <div class="stat-label">Final P&L</div>
-            <div class="stat-value" style="color:${pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+            <div class="stat-value" style="color:${pnl >= 0 ? 'var(--cyan)' : 'var(--red)'}">
               ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}
             </div>
           </div>
@@ -1183,7 +1183,7 @@ function viewCalendarDay(ds) {
       <div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem">
         ${dayTrades.map(t => {
           const pnl = Number(t.pnl);
-          return `<div style="background:var(--bg-secondary);border-radius:8px;padding:0.6rem 0.75rem;cursor:pointer"
+          return `<div style="background:var(--bg-surface);border-radius:8px;padding:0.6rem 0.75rem;cursor:pointer"
             onclick="this.closest('.confirm-overlay').remove();viewTrade('${esc(t.id)}')">
             <div style="display:flex;justify-content:space-between">
               <span style="font-weight:700">${esc(t.symbol)}</span>
@@ -1501,7 +1501,7 @@ function profileModal() {
         </div>
         <div class="danger-zone" style="margin-top:0.75rem">
           <div>
-            <div style="font-weight:600;margin-bottom:0.25rem;color:var(--accent-red)">Delete Account</div>
+            <div style="font-weight:600;margin-bottom:0.25rem;color:var(--red)">Delete Account</div>
             <div style="font-size:0.8rem;color:var(--text-secondary)">Permanently delete your account and all data</div>
           </div>
           <button class="btn btn-danger btn-sm" onclick="doDeleteAccount()">Delete</button>
